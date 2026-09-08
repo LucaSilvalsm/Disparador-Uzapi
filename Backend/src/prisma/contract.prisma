@@ -1,0 +1,176 @@
+enum StatusCampanha {
+  @@type("pg/text@1")
+
+  RASCUNHO   = "rascunho"
+  EM_ANDAMENTO = "em_andamento"
+  PAUSADA    = "pausada"
+  CONCLUIDA  = "concluida"
+  CANCELADA  = "cancelada"
+  FALHOU     = "falhou"
+}
+
+enum StatusContatoCampanha {
+  @@type("pg/text@1")
+
+  PENDENTE     = "pendente"
+  PROCESSANDO  = "processando"
+  CONCLUIDO    = "concluido"
+  PARCIAL      = "parcial"
+  FALHOU       = "falhou"
+}
+
+enum TipoMensagem {
+  @@type("pg/text@1")
+
+  TEXTO  = "texto"
+  LINK   = "link"
+  IMAGEM = "imagem"
+  VIDEO  = "video"
+  AUDIO  = "audio"
+}
+
+enum StatusMensagem {
+  @@type("pg/text@1")
+
+  PENDENTE = "pendente"
+  SUCESSO  = "sucesso"
+  FALHOU   = "falhou"
+}
+
+model Instancia {
+  id                   Int      @id @default(autoincrement())
+  nome                 String
+  usuarioUzapi         String
+  token                String
+  idNumeroTelefone     String   @unique
+  limiteDiarioContatos Int      @default(250)
+  ativo                Boolean  @default(true)
+
+  criadoEm             DateTime @default(now())
+  atualizadoEm         DateTime @default(now())
+
+  campanhas Campanha[]
+
+  @@map("instancia")
+}
+
+model Campanha {
+  id             Int            @id @default(autoincrement())
+  instanciaId    Int
+  nome           String
+  emailRelatorio String?
+  status         StatusCampanha @default(RASCUNHO)
+
+  hashTokenAcesso String?
+
+  iniciadaEm   DateTime?
+  finalizadaEm DateTime?
+  criadaEm     DateTime @default(now())
+
+  instancia Instancia @relation(
+    fields: [instanciaId],
+    references: [id]
+  )
+
+  contatos  CampanhaContato[]
+  mensagens Mensagem[]
+
+  @@index([instanciaId])
+  @@index([status])
+  @@map("campanha")
+}
+
+model Contato {
+  id        Int      @id @default(autoincrement())
+  telefone  String   @unique
+  nome      String?
+  criadoEm  DateTime @default(now())
+
+  campanhas CampanhaContato[]
+
+  @@map("contato")
+}
+
+model CampanhaContato {
+  id         Int                    @id @default(autoincrement())
+  campanhaId Int
+  contatoId  Int
+
+  status StatusContatoCampanha @default(PENDENTE)
+
+  iniciadoEm   DateTime?
+  finalizadoEm DateTime?
+  criadoEm     DateTime @default(now())
+
+  campanha Campanha @relation(
+    fields: [campanhaId],
+    references: [id]
+  )
+
+  contato Contato @relation(
+    fields: [contatoId],
+    references: [id]
+  )
+
+  resultados ResultadoMensagem[]
+
+  @@unique([campanhaId, contatoId])
+  @@index([campanhaId])
+  @@index([contatoId])
+  @@index([status])
+  @@map("campanha_contato")
+}
+
+model Mensagem {
+  id         Int          @id @default(autoincrement())
+  campanhaId Int
+  posicao    Int
+  tipo       TipoMensagem
+
+  texto      String?
+  urlMidia   String?
+  idMidia    String?
+
+  criadaEm DateTime @default(now())
+
+  campanha Campanha @relation(
+    fields: [campanhaId],
+    references: [id]
+  )
+
+  resultados ResultadoMensagem[]
+
+  @@unique([campanhaId, posicao])
+  @@index([campanhaId])
+  @@map("mensagem")
+}
+
+model ResultadoMensagem {
+  id                Int             @id @default(autoincrement())
+  mensagemId        Int
+  campanhaContatoId Int
+  status            StatusMensagem @default(PENDENTE)
+
+  idFila     String?
+  idMensagem String?
+  erro       String?
+
+  enviadaEm DateTime?
+  criadaEm  DateTime @default(now())
+
+  mensagem Mensagem @relation(
+    fields: [mensagemId],
+    references: [id]
+  )
+
+  campanhaContato CampanhaContato @relation(
+    fields: [campanhaContatoId],
+    references: [id]
+  )
+
+  @@unique([mensagemId, campanhaContatoId])
+  @@index([mensagemId])
+  @@index([campanhaContatoId])
+  @@index([status])
+  @@map("resultado_mensagem")
+}

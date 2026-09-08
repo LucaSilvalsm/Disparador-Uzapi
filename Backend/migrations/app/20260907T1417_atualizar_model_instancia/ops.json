@@ -1,0 +1,1063 @@
+[
+  {
+    "id": "schema.public",
+    "label": "Create schema \"public\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres"
+    },
+    "precheck": [],
+    "execute": [
+      {
+        "description": "Create schema \"public\"",
+        "sql": "CREATE SCHEMA IF NOT EXISTS \"public\"",
+        "params": []
+      }
+    ],
+    "postcheck": []
+  },
+  {
+    "id": "table.campanha",
+    "label": "Create table \"campanha\"",
+    "summary": "Creates table \"campanha\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "campanha"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"campanha\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"campanha\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"campanha\"",
+        "sql": "CREATE TABLE \"public\".\"campanha\" (\n  \"criadaEm\" timestamptz DEFAULT (now()) NOT NULL,\n  \"emailRelatorio\" text,\n  \"finalizadaEm\" timestamptz,\n  \"hashTokenAcesso\" text,\n  \"id\" SERIAL NOT NULL,\n  \"iniciadaEm\" timestamptz,\n  \"instanciaId\" int4 NOT NULL,\n  \"nome\" text NOT NULL,\n  \"status\" text DEFAULT 'rascunho' NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"campanha_status_check_8e114037\" CHECK (\"status\" IN ('rascunho', 'em_andamento', 'pausada', 'concluida', 'cancelada', 'falhou'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"campanha\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"campanha\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.campanha_contato",
+    "label": "Create table \"campanha_contato\"",
+    "summary": "Creates table \"campanha_contato\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "campanha_contato"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"campanha_contato\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"campanha_contato\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"campanha_contato\"",
+        "sql": "CREATE TABLE \"public\".\"campanha_contato\" (\n  \"campanhaId\" int4 NOT NULL,\n  \"contatoId\" int4 NOT NULL,\n  \"criadoEm\" timestamptz DEFAULT (now()) NOT NULL,\n  \"finalizadoEm\" timestamptz,\n  \"id\" SERIAL NOT NULL,\n  \"iniciadoEm\" timestamptz,\n  \"status\" text DEFAULT 'pendente' NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"campanha_contato_status_check_5cb3fc7e\" CHECK (\"status\" IN ('pendente', 'processando', 'concluido', 'parcial', 'falhou'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"campanha_contato\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"campanha_contato\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.contato",
+    "label": "Create table \"contato\"",
+    "summary": "Creates table \"contato\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "contato"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"contato\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"contato\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"contato\"",
+        "sql": "CREATE TABLE \"public\".\"contato\" (\n  \"criadoEm\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"nome\" text,\n  \"telefone\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"contato\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"contato\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.instancia",
+    "label": "Create table \"instancia\"",
+    "summary": "Creates table \"instancia\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "instancia"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"instancia\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"instancia\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"instancia\"",
+        "sql": "CREATE TABLE \"public\".\"instancia\" (\n  \"ativo\" bool DEFAULT true NOT NULL,\n  \"atualizadoEm\" timestamptz NOT NULL,\n  \"criadoEm\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"idNumeroTelefone\" text NOT NULL,\n  \"limiteDiarioContatos\" int4 DEFAULT 250 NOT NULL,\n  \"nome\" text NOT NULL,\n  \"token\" text NOT NULL,\n  \"usuarioUzapi\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"instancia\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"instancia\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.mensagem",
+    "label": "Create table \"mensagem\"",
+    "summary": "Creates table \"mensagem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "mensagem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"mensagem\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"mensagem\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"mensagem\"",
+        "sql": "CREATE TABLE \"public\".\"mensagem\" (\n  \"campanhaId\" int4 NOT NULL,\n  \"criadaEm\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"posicao\" int4 NOT NULL,\n  \"texto\" text,\n  \"tipo\" text NOT NULL,\n  \"urlMidia\" text,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"mensagem_tipo_check_46a9b4c2\" CHECK (\"tipo\" IN ('texto', 'imagem', 'audio'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"mensagem\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"mensagem\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.resultado_mensagem",
+    "label": "Create table \"resultado_mensagem\"",
+    "summary": "Creates table \"resultado_mensagem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "resultado_mensagem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"resultado_mensagem\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"resultado_mensagem\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"resultado_mensagem\"",
+        "sql": "CREATE TABLE \"public\".\"resultado_mensagem\" (\n  \"campanhaContatoId\" int4 NOT NULL,\n  \"criadaEm\" timestamptz DEFAULT (now()) NOT NULL,\n  \"enviadaEm\" timestamptz,\n  \"erro\" text,\n  \"id\" SERIAL NOT NULL,\n  \"idFila\" text,\n  \"idMensagem\" text,\n  \"mensagemId\" int4 NOT NULL,\n  \"status\" text DEFAULT 'pendente' NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"resultado_mensagem_status_check_9a74aed8\" CHECK (\"status\" IN ('pendente', 'sucesso', 'falhou'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"resultado_mensagem\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"resultado_mensagem\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.campanha_contato.campanha_contato_campanhaId_contatoId_key",
+    "label": "Add unique constraint on \"campanha_contato\" (campanhaId, contatoId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "campanha_contato_campanhaId_contatoId_key",
+        "table": "campanha_contato"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"campanha_contato_campanhaId_contatoId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "campanha_contato_campanhaId_contatoId_key",
+          "public",
+          "\"public\".\"campanha_contato\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"campanha_contato_campanhaId_contatoId_key\"",
+        "sql": "ALTER TABLE \"public\".\"campanha_contato\" ADD CONSTRAINT \"campanha_contato_campanhaId_contatoId_key\" UNIQUE (\"campanhaId\", \"contatoId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"campanha_contato_campanhaId_contatoId_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "campanha_contato_campanhaId_contatoId_key",
+          "public",
+          "\"public\".\"campanha_contato\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.instancia.instancia_idNumeroTelefone_key",
+    "label": "Add unique constraint on \"instancia\" (idNumeroTelefone)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "instancia_idNumeroTelefone_key",
+        "table": "instancia"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"instancia_idNumeroTelefone_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "instancia_idNumeroTelefone_key",
+          "public",
+          "\"public\".\"instancia\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"instancia_idNumeroTelefone_key\"",
+        "sql": "ALTER TABLE \"public\".\"instancia\" ADD CONSTRAINT \"instancia_idNumeroTelefone_key\" UNIQUE (\"idNumeroTelefone\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"instancia_idNumeroTelefone_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "instancia_idNumeroTelefone_key",
+          "public",
+          "\"public\".\"instancia\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.mensagem.mensagem_campanhaId_posicao_key",
+    "label": "Add unique constraint on \"mensagem\" (campanhaId, posicao)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "mensagem_campanhaId_posicao_key",
+        "table": "mensagem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"mensagem_campanhaId_posicao_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "mensagem_campanhaId_posicao_key",
+          "public",
+          "\"public\".\"mensagem\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"mensagem_campanhaId_posicao_key\"",
+        "sql": "ALTER TABLE \"public\".\"mensagem\" ADD CONSTRAINT \"mensagem_campanhaId_posicao_key\" UNIQUE (\"campanhaId\", \"posicao\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"mensagem_campanhaId_posicao_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "mensagem_campanhaId_posicao_key",
+          "public",
+          "\"public\".\"mensagem\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.resultado_mensagem.resultado_mensagem_mensagemId_campanhaContatoId_key",
+    "label": "Add unique constraint on \"resultado_mensagem\" (mensagemId, campanhaContatoId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "resultado_mensagem_mensagemId_campanhaContatoId_key",
+        "table": "resultado_mensagem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"resultado_mensagem_mensagemId_campanhaContatoId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "resultado_mensagem_mensagemId_campanhaContatoId_key",
+          "public",
+          "\"public\".\"resultado_mensagem\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"resultado_mensagem_mensagemId_campanhaContatoId_key\"",
+        "sql": "ALTER TABLE \"public\".\"resultado_mensagem\" ADD CONSTRAINT \"resultado_mensagem_mensagemId_campanhaContatoId_key\" UNIQUE (\"mensagemId\", \"campanhaContatoId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"resultado_mensagem_mensagemId_campanhaContatoId_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "resultado_mensagem_mensagemId_campanhaContatoId_key",
+          "public",
+          "\"public\".\"resultado_mensagem\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.campanha.campanha_instanciaId_idx_00db4b25",
+    "label": "Create index \"campanha_instanciaId_idx_00db4b25\" on \"campanha\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "campanha_instanciaId_idx_00db4b25",
+        "table": "campanha"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"campanha_instanciaId_idx_00db4b25\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"campanha_instanciaId_idx_00db4b25\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"campanha_instanciaId_idx_00db4b25\"",
+        "sql": "CREATE INDEX \"campanha_instanciaId_idx_00db4b25\" ON \"public\".\"campanha\" (\"instanciaId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"campanha_instanciaId_idx_00db4b25\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"campanha_instanciaId_idx_00db4b25\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.campanha.campanha_status_idx_e98638ab",
+    "label": "Create index \"campanha_status_idx_e98638ab\" on \"campanha\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "campanha_status_idx_e98638ab",
+        "table": "campanha"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"campanha_status_idx_e98638ab\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"campanha_status_idx_e98638ab\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"campanha_status_idx_e98638ab\"",
+        "sql": "CREATE INDEX \"campanha_status_idx_e98638ab\" ON \"public\".\"campanha\" (\"status\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"campanha_status_idx_e98638ab\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"campanha_status_idx_e98638ab\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.campanha_contato.campanha_contato_campanhaId_idx_6cd07fa5",
+    "label": "Create index \"campanha_contato_campanhaId_idx_6cd07fa5\" on \"campanha_contato\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "campanha_contato_campanhaId_idx_6cd07fa5",
+        "table": "campanha_contato"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"campanha_contato_campanhaId_idx_6cd07fa5\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"campanha_contato_campanhaId_idx_6cd07fa5\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"campanha_contato_campanhaId_idx_6cd07fa5\"",
+        "sql": "CREATE INDEX \"campanha_contato_campanhaId_idx_6cd07fa5\" ON \"public\".\"campanha_contato\" (\"campanhaId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"campanha_contato_campanhaId_idx_6cd07fa5\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"campanha_contato_campanhaId_idx_6cd07fa5\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.campanha_contato.campanha_contato_contatoId_idx_55ea5573",
+    "label": "Create index \"campanha_contato_contatoId_idx_55ea5573\" on \"campanha_contato\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "campanha_contato_contatoId_idx_55ea5573",
+        "table": "campanha_contato"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"campanha_contato_contatoId_idx_55ea5573\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"campanha_contato_contatoId_idx_55ea5573\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"campanha_contato_contatoId_idx_55ea5573\"",
+        "sql": "CREATE INDEX \"campanha_contato_contatoId_idx_55ea5573\" ON \"public\".\"campanha_contato\" (\"contatoId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"campanha_contato_contatoId_idx_55ea5573\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"campanha_contato_contatoId_idx_55ea5573\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.campanha_contato.campanha_contato_status_idx_e98638ab",
+    "label": "Create index \"campanha_contato_status_idx_e98638ab\" on \"campanha_contato\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "campanha_contato_status_idx_e98638ab",
+        "table": "campanha_contato"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"campanha_contato_status_idx_e98638ab\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"campanha_contato_status_idx_e98638ab\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"campanha_contato_status_idx_e98638ab\"",
+        "sql": "CREATE INDEX \"campanha_contato_status_idx_e98638ab\" ON \"public\".\"campanha_contato\" (\"status\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"campanha_contato_status_idx_e98638ab\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"campanha_contato_status_idx_e98638ab\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.contato.contato_telefone_idx_15d68930",
+    "label": "Create index \"contato_telefone_idx_15d68930\" on \"contato\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "contato_telefone_idx_15d68930",
+        "table": "contato"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"contato_telefone_idx_15d68930\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"contato_telefone_idx_15d68930\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"contato_telefone_idx_15d68930\"",
+        "sql": "CREATE INDEX \"contato_telefone_idx_15d68930\" ON \"public\".\"contato\" (\"telefone\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"contato_telefone_idx_15d68930\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"contato_telefone_idx_15d68930\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.mensagem.mensagem_campanhaId_idx_6cd07fa5",
+    "label": "Create index \"mensagem_campanhaId_idx_6cd07fa5\" on \"mensagem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "mensagem_campanhaId_idx_6cd07fa5",
+        "table": "mensagem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"mensagem_campanhaId_idx_6cd07fa5\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"mensagem_campanhaId_idx_6cd07fa5\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"mensagem_campanhaId_idx_6cd07fa5\"",
+        "sql": "CREATE INDEX \"mensagem_campanhaId_idx_6cd07fa5\" ON \"public\".\"mensagem\" (\"campanhaId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"mensagem_campanhaId_idx_6cd07fa5\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"mensagem_campanhaId_idx_6cd07fa5\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.resultado_mensagem.resultado_mensagem_campanhaContatoId_idx_8a35d7f8",
+    "label": "Create index \"resultado_mensagem_campanhaContatoId_idx_8a35d7f8\" on \"resultado_mensagem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "resultado_mensagem_campanhaContatoId_idx_8a35d7f8",
+        "table": "resultado_mensagem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"resultado_mensagem_campanhaContatoId_idx_8a35d7f8\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"resultado_mensagem_campanhaContatoId_idx_8a35d7f8\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"resultado_mensagem_campanhaContatoId_idx_8a35d7f8\"",
+        "sql": "CREATE INDEX \"resultado_mensagem_campanhaContatoId_idx_8a35d7f8\" ON \"public\".\"resultado_mensagem\" (\"campanhaContatoId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"resultado_mensagem_campanhaContatoId_idx_8a35d7f8\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"resultado_mensagem_campanhaContatoId_idx_8a35d7f8\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.resultado_mensagem.resultado_mensagem_mensagemId_idx_fa67b8b9",
+    "label": "Create index \"resultado_mensagem_mensagemId_idx_fa67b8b9\" on \"resultado_mensagem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "resultado_mensagem_mensagemId_idx_fa67b8b9",
+        "table": "resultado_mensagem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"resultado_mensagem_mensagemId_idx_fa67b8b9\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"resultado_mensagem_mensagemId_idx_fa67b8b9\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"resultado_mensagem_mensagemId_idx_fa67b8b9\"",
+        "sql": "CREATE INDEX \"resultado_mensagem_mensagemId_idx_fa67b8b9\" ON \"public\".\"resultado_mensagem\" (\"mensagemId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"resultado_mensagem_mensagemId_idx_fa67b8b9\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"resultado_mensagem_mensagemId_idx_fa67b8b9\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.resultado_mensagem.resultado_mensagem_status_idx_e98638ab",
+    "label": "Create index \"resultado_mensagem_status_idx_e98638ab\" on \"resultado_mensagem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "resultado_mensagem_status_idx_e98638ab",
+        "table": "resultado_mensagem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"resultado_mensagem_status_idx_e98638ab\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"resultado_mensagem_status_idx_e98638ab\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"resultado_mensagem_status_idx_e98638ab\"",
+        "sql": "CREATE INDEX \"resultado_mensagem_status_idx_e98638ab\" ON \"public\".\"resultado_mensagem\" (\"status\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"resultado_mensagem_status_idx_e98638ab\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"resultado_mensagem_status_idx_e98638ab\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.campanha.campanha_instanciaId_fkey",
+    "label": "Add foreign key \"campanha_instanciaId_fkey\" on \"campanha\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "campanha_instanciaId_fkey",
+        "table": "campanha"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"campanha_instanciaId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "campanha_instanciaId_fkey",
+          "public",
+          "\"public\".\"campanha\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"campanha_instanciaId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"campanha\"\nADD CONSTRAINT \"campanha_instanciaId_fkey\"\nFOREIGN KEY (\"instanciaId\")\nREFERENCES \"public\".\"instancia\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"campanha_instanciaId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "campanha_instanciaId_fkey",
+          "public",
+          "\"public\".\"campanha\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.campanha_contato.campanha_contato_campanhaId_fkey",
+    "label": "Add foreign key \"campanha_contato_campanhaId_fkey\" on \"campanha_contato\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "campanha_contato_campanhaId_fkey",
+        "table": "campanha_contato"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"campanha_contato_campanhaId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "campanha_contato_campanhaId_fkey",
+          "public",
+          "\"public\".\"campanha_contato\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"campanha_contato_campanhaId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"campanha_contato\"\nADD CONSTRAINT \"campanha_contato_campanhaId_fkey\"\nFOREIGN KEY (\"campanhaId\")\nREFERENCES \"public\".\"campanha\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"campanha_contato_campanhaId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "campanha_contato_campanhaId_fkey",
+          "public",
+          "\"public\".\"campanha_contato\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.campanha_contato.campanha_contato_contatoId_fkey",
+    "label": "Add foreign key \"campanha_contato_contatoId_fkey\" on \"campanha_contato\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "campanha_contato_contatoId_fkey",
+        "table": "campanha_contato"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"campanha_contato_contatoId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "campanha_contato_contatoId_fkey",
+          "public",
+          "\"public\".\"campanha_contato\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"campanha_contato_contatoId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"campanha_contato\"\nADD CONSTRAINT \"campanha_contato_contatoId_fkey\"\nFOREIGN KEY (\"contatoId\")\nREFERENCES \"public\".\"contato\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"campanha_contato_contatoId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "campanha_contato_contatoId_fkey",
+          "public",
+          "\"public\".\"campanha_contato\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.mensagem.mensagem_campanhaId_fkey",
+    "label": "Add foreign key \"mensagem_campanhaId_fkey\" on \"mensagem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "mensagem_campanhaId_fkey",
+        "table": "mensagem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"mensagem_campanhaId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "mensagem_campanhaId_fkey",
+          "public",
+          "\"public\".\"mensagem\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"mensagem_campanhaId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"mensagem\"\nADD CONSTRAINT \"mensagem_campanhaId_fkey\"\nFOREIGN KEY (\"campanhaId\")\nREFERENCES \"public\".\"campanha\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"mensagem_campanhaId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "mensagem_campanhaId_fkey",
+          "public",
+          "\"public\".\"mensagem\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.resultado_mensagem.resultado_mensagem_mensagemId_fkey",
+    "label": "Add foreign key \"resultado_mensagem_mensagemId_fkey\" on \"resultado_mensagem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "resultado_mensagem_mensagemId_fkey",
+        "table": "resultado_mensagem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"resultado_mensagem_mensagemId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "resultado_mensagem_mensagemId_fkey",
+          "public",
+          "\"public\".\"resultado_mensagem\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"resultado_mensagem_mensagemId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"resultado_mensagem\"\nADD CONSTRAINT \"resultado_mensagem_mensagemId_fkey\"\nFOREIGN KEY (\"mensagemId\")\nREFERENCES \"public\".\"mensagem\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"resultado_mensagem_mensagemId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "resultado_mensagem_mensagemId_fkey",
+          "public",
+          "\"public\".\"resultado_mensagem\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.resultado_mensagem.resultado_mensagem_campanhaContatoId_fkey",
+    "label": "Add foreign key \"resultado_mensagem_campanhaContatoId_fkey\" on \"resultado_mensagem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "resultado_mensagem_campanhaContatoId_fkey",
+        "table": "resultado_mensagem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"resultado_mensagem_campanhaContatoId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "resultado_mensagem_campanhaContatoId_fkey",
+          "public",
+          "\"public\".\"resultado_mensagem\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"resultado_mensagem_campanhaContatoId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"resultado_mensagem\"\nADD CONSTRAINT \"resultado_mensagem_campanhaContatoId_fkey\"\nFOREIGN KEY (\"campanhaContatoId\")\nREFERENCES \"public\".\"campanha_contato\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"resultado_mensagem_campanhaContatoId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "resultado_mensagem_campanhaContatoId_fkey",
+          "public",
+          "\"public\".\"resultado_mensagem\""
+        ]
+      }
+    ]
+  }
+]
