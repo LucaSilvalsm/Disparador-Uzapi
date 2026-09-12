@@ -2,26 +2,28 @@ import instanciaRepository from "./InstanciaRepository.js";
 import { config, validarLimiteContatos } from "../../shared/config.js";
 import uzapiClient from "../../shared/Integration/Uzapi.js";
 import { erroHttp } from "../../shared/utils/erros.js";
+import { normalizarEmail } from "../../shared/utils/normalizarEmail.js";
 
 class InstanciaService {
   async cadastrar(data) {
     const {
       nome,
-      usuarioUzapi,
+      email,
       idNumeroTelefone,
       token,
       limiteDiarioContatos,
     } = data;
 
-    if ([nome, usuarioUzapi, idNumeroTelefone, token].some((campo) => typeof campo !== "string" || !campo.trim())) {
+    if ([nome, idNumeroTelefone, token].some((campo) => typeof campo !== "string" || !campo.trim())) {
       const error = new Error(
-        "Nome, usuário UZAPI, Phone ID e token são obrigatórios."
+        "Nome, Phone ID e token são obrigatórios."
       );
 
       error.statusCode = 400;
       throw error;
     }
 
+    const emailNormalizado = normalizarEmail(email);
     const instanciaExistente =
       await instanciaRepository.buscarPorNumeroTelefone(
         idNumeroTelefone.trim()
@@ -37,11 +39,11 @@ class InstanciaService {
     }
 
     validarLimiteContatos(limiteDiarioContatos === undefined ? config.limitePadrao : limiteDiarioContatos);
-    uzapiClient.validarCredenciais({ usuarioUzapi, idNumeroTelefone, token });
+    uzapiClient.validarCredenciais({ idNumeroTelefone, token });
 
     return instanciaRepository.cadastrar({
       nome: nome.trim(),
-      usuarioUzapi: usuarioUzapi.trim(),
+      email: emailNormalizado,
       idNumeroTelefone: idNumeroTelefone.trim(),
       token: uzapiClient.normalizarToken(token),
       limiteDiarioContatos: limiteDiarioContatos === undefined ? config.limitePadrao : limiteDiarioContatos,
@@ -72,7 +74,7 @@ class InstanciaService {
     await this.buscarPorId(id);
 
     const alteracoes = {};
-    for (const campo of ["nome", "usuarioUzapi", "idNumeroTelefone", "token"]) {
+    for (const campo of ["nome", "idNumeroTelefone", "token"]) {
       if (data[campo] !== undefined) {
         if (typeof data[campo] !== "string" || !data[campo].trim()) {
           throw erroHttp(400, `O campo ${campo} deve ser um texto não vazio.`);
@@ -81,6 +83,7 @@ class InstanciaService {
       }
     }
     if (data.token !== undefined) alteracoes.token = uzapiClient.normalizarToken(data.token);
+    if (data.email !== undefined) alteracoes.email = normalizarEmail(data.email);
     if (data.ativo !== undefined) {
       if (typeof data.ativo !== "boolean") throw erroHttp(400, "O campo ativo deve ser booleano.");
       alteracoes.ativo = data.ativo;

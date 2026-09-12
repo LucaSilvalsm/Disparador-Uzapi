@@ -6,7 +6,9 @@ class CampanhaRepository {
       const campanha = await tx.orm.public.Campanha.create(data);
       // Ordenação consistente evita bloqueios cruzados ao reutilizar contatos.
       const contatosPorTelefone = new Map();
-      for (const contato of [...contatos].sort((a, b) => a.telefone.localeCompare(b.telefone))) {
+      for (const contato of [...contatos].sort((a, b) =>
+        a.telefone.localeCompare(b.telefone),
+      )) {
         const salvo = await tx.orm.public.Contato.upsert({
           create: contato,
           update: {},
@@ -21,7 +23,10 @@ class CampanhaRepository {
         });
       }
       for (const mensagem of mensagens) {
-        await tx.orm.public.Mensagem.create({ ...mensagem, campanhaId: campanha.id });
+        await tx.orm.public.Mensagem.create({
+          ...mensagem,
+          campanhaId: campanha.id,
+        });
       }
       return campanha;
     });
@@ -104,6 +109,42 @@ class CampanhaRepository {
       status,
       ...dadosExtras,
     });
+  }
+  async contarContatosPorStatus(campanhaId, status) {
+    const resultado = await db.orm.public.CampanhaContato.where({
+      campanhaId,
+      status,
+    }).aggregate((a) => ({
+      total: a.count(),
+    }));
+
+    return resultado.total;
+  }
+
+  async contarMensagensPorStatusCampanha(campanhaId, status) {
+    const contatos = await db.orm.public.CampanhaContato.where({
+      campanhaId,
+    })
+      .select("id")
+      .all();
+
+    if (!contatos.length) {
+      return 0;
+    }
+
+    const idsCampanhaContato = contatos.map((contato) => contato.id);
+
+    const resultado = await db.orm.public.ResultadoMensagem.where((resultado) =>
+      resultado.campanhaContatoId.in(idsCampanhaContato),
+    )
+      .where({
+        status,
+      })
+      .aggregate((a) => ({
+        total: a.count(),
+      }));
+
+    return resultado.total;
   }
 }
 

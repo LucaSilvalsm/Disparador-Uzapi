@@ -99,7 +99,7 @@ a evolução e a escala da aplicação justificarem.
 
 Cada instância da Uzapi possui os seguintes dados principais:
 
--   `username`
+-   `email` do usuário, para acompanhamento e relatório
 -   `token`
 -   `phone_number_id`
 -   `version`
@@ -110,7 +110,7 @@ A versão será definida globalmente por `UZAPI_VERSION` no `.env`, com
 Formato base informado para envio:
 
 ``` text
-https://api.uzapi.com.br/{username}/{version}/{phone_number_id}/messages
+https://api.uzapi.com.br/{version}/{phone_number_id}/messages
 ```
 
 Exemplo de corpo para mensagem de texto:
@@ -485,10 +485,9 @@ Fluxo conceitual:
 
 ```text
 Usuário informa:
-username
 token
 phone_number_id
-e-mail opcional
+e-mail
         ↓
 Backend valida a instância Uzapi
         ↓
@@ -511,7 +510,7 @@ Campanha finaliza
         ↓
 Relatório em tela
 +
-e-mail opcional
+e-mail da campanha
 ```
 
 ### 17.1. Link seguro para acompanhamento
@@ -556,9 +555,16 @@ estado atual
 
 Campanha, progresso e resultados continuarão persistidos no backend.
 
-### 17.3. E-mail opcional
+### 17.3. E-mail da instância e da campanha
 
-O usuário poderá informar um e-mail associado à campanha.
+O usuário deverá informar um e-mail válido ao cadastrar uma instância.
+Esse endereço será copiado para `emailRelatorio` ao criar uma campanha,
+salvo quando um destinatário específico for informado na própria campanha.
+Alterar o e-mail da instância não altera o destinatário das campanhas já criadas.
+
+Instâncias anteriores à atualização poderão manter o campo `email` nulo
+até que o usuário o preencha. Para criar novas campanhas, será necessário
+preencher esse campo ou informar um `emailRelatorio` válido.
 
 Inicialmente ele poderá ser utilizado para envio do relatório ao término do disparo.
 
@@ -566,7 +572,7 @@ Como evolução, o e-mail também poderá receber um link seguro para retornar �
 
 ### 17.4. Credenciais da Uzapi não serão credenciais do disparador
 
-`username`, `token` e `phone_number_id` identificam/configuram a instância Uzapi e não deverão funcionar como login permanente do usuário no disparador.
+`token` e `phone_number_id` identificam/configuram a instância Uzapi e não deverão funcionar como login permanente do usuário no disparador. A API atual não exige `username`. O e-mail também não substitui a credencial segura de acesso à campanha.
 
 O token da Uzapi será tratado como credencial sensível e utilizado pelo backend somente para comunicação autorizada com a API.
 

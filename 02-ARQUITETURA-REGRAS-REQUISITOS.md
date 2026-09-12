@@ -181,7 +181,7 @@ Responsável pela integração/configuração de uma conta Uzapi.
 Dados principais:
 
 ``` text
-username
+email
 token
 phone_number_id
 version
@@ -538,10 +538,11 @@ Uzapi
 A URL será construída com:
 
 ``` text
-username
 version
 phone_number_id
 ```
+
+Formato atual: `baseurl/version/phone_number_id`, sem username.
 
 e a autenticação utilizará o token conforme especificação da API.
 
@@ -607,7 +608,8 @@ tempo real seja necessário.
 ### Obrigatórios
 
 -   Conectar/configurar uma instância Uzapi.
--   Trabalhar com username, token, phone_number_id e versão.
+-   Trabalhar com token, phone_number_id e versão.
+-   Cadastrar o e-mail do usuário na instância como destinatário padrão dos relatórios.
 -   Cadastrar/importar lista de contatos.
 -   Criar campanha.
 -   Criar mensagem.
@@ -817,7 +819,14 @@ Como evolução, o link também poderá ser enviado ao e-mail informado na cria�
 
 ### E-mail
 
-O e-mail será opcional no MVP e poderá ser associado à campanha para:
+O e-mail será obrigatório no cadastro de novas instâncias e será copiado para
+`emailRelatorio` ao criar uma campanha. Um destinatário específico válido
+informado na campanha terá prioridade. Alterações posteriores na instância
+não modificarão campanhas já criadas. Instâncias antigas poderão manter
+`email` nulo até a atualização; novas campanhas precisarão de um endereço
+válido na instância ou em `emailRelatorio`.
+
+O endereço poderá ser utilizado para:
 
 - envio do relatório final;
 - envio futuro do link de acompanhamento;
@@ -828,7 +837,6 @@ O e-mail será opcional no MVP e poderá ser associado à campanha para:
 As credenciais:
 
 ```text
-username
 token
 phone_number_id
 version

@@ -63,8 +63,49 @@ class CampanhaController {
       const resultado = await campanhaService.iniciar(id);
 
       return res.status(202).json({
-        message: "Campanha iniciada. O processamento continuará em segundo plano.",
+        message:
+          "Campanha iniciada. O processamento continuará em segundo plano.",
         data: resultado,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+  async progresso(req, res, next) {
+    try {
+      const id = Number(req.params.id);
+
+      if (!Number.isInteger(id) || id <= 0) {
+        const error = new Error("ID da campanha inválido.");
+
+        error.statusCode = 400;
+        throw error;
+      }
+
+      const progresso = await campanhaService.progresso(id);
+
+      return res.status(200).json({
+        data: progresso,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+  async relatorio(req, res, next) {
+    try {
+      const id = Number(req.params.id);
+
+      if (!Number.isInteger(id) || id <= 0) {
+        const error = new Error("ID da campanha inválido.");
+
+        error.statusCode = 400;
+        throw error;
+      }
+
+      const relatorio = await campanhaService.relatorio(id);
+
+      return res.status(200).json({
+        data: relatorio,
       });
     } catch (error) {
       next(error);

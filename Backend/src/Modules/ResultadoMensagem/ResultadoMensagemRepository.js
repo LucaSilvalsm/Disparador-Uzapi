@@ -51,6 +51,14 @@ class ResultadoMensagemRepository {
       mensagemId,
     }).all();
   }
+  async buscarResultado(mensagemId, campanhaContatoId) {
+    return db.orm.public.ResultadoMensagem.where({
+      mensagemId,
+      campanhaContatoId,
+    })
+      .select("status", "idFila", "idMensagem", "erro", "enviadaEm")
+      .first();
+  }
 }
 
 export default new ResultadoMensagemRepository();

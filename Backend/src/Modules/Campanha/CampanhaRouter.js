@@ -11,4 +11,7 @@ router.get("/", campanhaController.listar);
 router.get("/:id", campanhaController.buscarPorId);
 router.post("/:id/iniciar", campanhaController.iniciar);
 
+router.get("/:id/progresso", campanhaController.progresso);
+router.get("/:id/relatorio", campanhaController.relatorio);
+
 export default router;

@@ -40,7 +40,8 @@ enum StatusMensagem {
 model Instancia {
   id                   Int      @id @default(autoincrement())
   nome                 String
-  usuarioUzapi         String
+  // Nulo apenas para permitir a migração de instâncias antigas sem e-mail.
+  email                String?
   token                String
   idNumeroTelefone     String   @unique
   limiteDiarioContatos Int      @default(250)

@@ -4,7 +4,7 @@ import { Temporal } from "@js-temporal/polyfill";
 const camposPublicos = [
   "id",
   "nome",
-  "usuarioUzapi",
+  "email",
   "idNumeroTelefone",
   "ativo",
   "limiteDiarioContatos",

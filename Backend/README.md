@@ -6,7 +6,7 @@ Backend em desenvolvimento, organizado por módulos, com Node.js, Express e Pris
 
 Instale as dependências com `npm install`, configure `.env` a partir de `.env.example` e execute `npm run dev` ou `npm start`. No PowerShell com scripts bloqueados, use `npm.cmd`.
 
-As tabelas e o contrato Prisma existentes continuam sendo utilizados; estes ajustes não exigem migration. O banco precisa estar configurado conforme `prisma-next.md`.
+O banco precisa estar configurado conforme `prisma-next.md`. A atualização da instância exige a migration `20260912T1954_instancia_sem_username_com_email`, que remove `usuarioUzapi` e adiciona `email`. Com as dependências de desenvolvimento instaladas, execute em `Backend`: `npm run contract:emit` e `npx prisma db migrate --advance-ref db`. Faça backup antes de migrar outro ambiente. O histórico inclui uma migration intermediária que registra a evolução anterior do contrato.
 
 ```env
 PORT=5000
@@ -17,6 +17,27 @@ DAILY_CONTACT_LIMIT=250
 ```
 
 Mantenha `DATABASE_URL` com a conexão do seu PostgreSQL. A versão da Uzapi é global e lida do ambiente na inicialização: para alterar, edite `UZAPI_VERSION` e reinicie o backend. Isso muda a URL utilizada, sem alterar o banco; eventuais diferenças de payload entre versões ainda precisam ser avaliadas.
+
+## Instância e destinatário do relatório
+
+O cadastro não utiliza mais `usuarioUzapi`. Exemplo de `POST /instancias`:
+
+```json
+{
+  "nome": "Minha instância",
+  "email": "usuario@example.com",
+  "idNumeroTelefone": "123456789",
+  "token": "TOKEN_DA_UZAPI"
+}
+```
+
+O e-mail é obrigatório e validado nos novos cadastros; não é uma credencial da Uzapi nem é enviado a ela. Instâncias diferentes podem utilizar o mesmo e-mail. As respostas públicas incluem `email`, mas não incluem o token.
+
+Instâncias antigas são preservadas com `email: null`. Para preenchê-lo, use `PATCH /instancias/:id` com `{"email":"usuario@example.com"}`. A migration não inventa endereços nem altera os estados das campanhas. Antes da remoção local de `usuarioUzapi`, os valores antigos foram salvos em `.local-backups/` (ignorado pelo Git), sem tokens.
+
+Ao criar uma campanha, o e-mail da instância é copiado para `emailRelatorio`. Um `emailRelatorio` válido informado no cadastro da campanha tem prioridade; omitido, nulo ou vazio usa o e-mail da instância. Se ambos estiverem ausentes ou o endereço escolhido for inválido, a API responde `400`. Alterar o e-mail da instância não modifica campanhas já criadas. Campanhas antigas com `emailRelatorio: null` continuam sem envio de relatório por e-mail.
+
+O serviço de relatório já existente utiliza esse destinatário; o envio depende da configuração SMTP. O envio de um link seguro de acompanhamento ainda precisa ser implementado.
 
 ## Datas nas respostas da API
 
@@ -66,7 +87,7 @@ Retorna `202 Accepted` após validar e persistir o início:
 }
 ```
 
-A resposta não contém mais o resultado final dos envios. O endpoint existente `GET /campanhas/:id` permite consultar o status; progresso detalhado e relatório serão implementados em uma etapa posterior.
+A resposta não contém mais o resultado final dos envios. Consulte `GET /campanhas/:id` para o status, `GET /campanhas/:id/progresso` para contagens e percentual, e `GET /campanhas/:id/relatorio` para o detalhamento dos resultados.
 
 O motor funciona no mesmo processo Node.js, independente da duração da requisição HTTP. Entre mensagens do mesmo contato espera de 5 a 10 segundos; entre contatos, de 30 a 60 segundos. Cada intervalo é sorteado novamente, sem espera após o último item.
 
@@ -82,9 +103,9 @@ A criação de campanha, a criação/reutilização dos contatos, os vínculos e
 
 ## Uzapi e diagnóstico
 
-A documentação Swagger consultada em 08/09/2026 especifica `Authorization: Bearer <token>`. O cliente normaliza espaços externos e um prefixo Bearer informado no cadastro, evitando duplicá-lo. Tokens vazios ou com espaços internos são rejeitados localmente.
+A documentação Swagger consultada em 12/09/2026 especifica `Authorization: Bearer <token>` e a rota `POST /{version}/{phone_number_id}/messages`, sem username. O cliente normaliza espaços externos e um prefixo Bearer informado no cadastro, evitando duplicá-lo. Tokens vazios ou com espaços internos são rejeitados localmente.
 
-O erro remoto `401 / Access Token não informado` é originado na Uzapi. A resposta antiga `Campanha processada` era montada pelo disparador. O Swagger também lista `GET /{username}/{version}/{phone_number_id}/instance`; a integração dessa consulta como validação prévia ainda não foi adicionada. Por enquanto, o cadastro valida os campos e a autorização remota é verificada no envio.
+O erro remoto `401 / Access Token não informado` é originado na Uzapi. A resposta antiga `Campanha processada` era montada pelo disparador. O Swagger também lista `GET /{version}/{phone_number_id}/instance`; a integração dessa consulta como validação prévia ainda não foi adicionada. Por enquanto, o cadastro valida os campos e a autorização remota é verificada no envio.
 
 Um `401` ou `403` durante o envio encerra a campanha como `falhou`, registra a falha atual e mantém os próximos contatos pendentes. Outras falhas de envio são registradas e o processamento continua. Não há retry automático. Sucesso significa que a requisição foi aceita pela Uzapi, não confirmação de entrega ao WhatsApp.
 
@@ -97,7 +118,7 @@ Referência: https://api.uzapi.com.br/swagger
 ## Próximas etapas acordadas
 
 - Definir a credencial segura de acesso por campanha. O campo `hashTokenAcesso` ainda não é utilizado; as rotas atuais ainda não verificam autorização por campanha.
-- Implementar endpoint de progresso e mini relatório depois da estabilização do motor.
+- Implementar o link seguro de acompanhamento e seu envio por e-mail.
 - Implementar frontend Vue e a suíte automatizada ao final dos módulos do backend.
 - Projetar recuperação após reinicialização e ações de pausa/continuação/cancelamento.
 

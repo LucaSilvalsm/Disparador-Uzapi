@@ -17,22 +17,20 @@ class UzapiClient {
   }
 
   validarCredenciais(instancia) {
-    for (const campo of ["usuarioUzapi", "idNumeroTelefone"]) {
-      if (typeof instancia[campo] !== "string" || !instancia[campo].trim()) {
-        throw erroHttp(400, "Usuário Uzapi e Phone ID são obrigatórios.");
-      }
+    if (typeof instancia.idNumeroTelefone !== "string" || !instancia.idNumeroTelefone.trim()) {
+      throw erroHttp(400, "O Phone ID é obrigatório.");
     }
     this.normalizarToken(instancia.token);
   }
 
   criarClient(instancia) {
     this.validarCredenciais(instancia);
-    const { usuarioUzapi, idNumeroTelefone, token } = instancia;
+    const { idNumeroTelefone, token } = instancia;
 
     const version = config.uzapiVersion;
 
     return axios.create({
-      baseURL: `${this.baseUrl}/${encodeURIComponent(usuarioUzapi.trim())}/${version}/${encodeURIComponent(idNumeroTelefone.trim())}`,
+      baseURL: `${this.baseUrl}/${version}/${encodeURIComponent(idNumeroTelefone.trim())}`,
 
       headers: {
         "Content-Type": "application/json",
@@ -95,7 +93,7 @@ class UzapiClient {
       delayMessage: 0,
 
       text: {
-        preview_url: false,
+        preview_url: true,
         body: mensagem.texto,
       },
     };
@@ -193,7 +191,7 @@ class UzapiClient {
       if (status === 401) {
         mensagemSegura = typeof detalhe === "string" && /access token não informado/i.test(detalhe)
           ? "Uzapi: Access Token não informado (HTTP 401). Confira a credencial e o cabeçalho Authorization."
-          : "Uzapi: credencial não autorizada (HTTP 401). Confira o token, usuário e Phone ID.";
+          : "Uzapi: credencial não autorizada (HTTP 401). Confira o token e o Phone ID.";
       }
       if (status === 403) mensagemSegura = "Uzapi: acesso negado à instância (HTTP 403).";
       if (status === 429) mensagemSegura = "Uzapi: limite de requisições atingido (HTTP 429).";

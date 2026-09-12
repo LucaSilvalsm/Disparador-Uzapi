@@ -1,0 +1,86 @@
+[
+  {
+    "id": "dropColumn.instancia.usuarioUzapi",
+    "label": "Drop column \"usuarioUzapi\" from \"instancia\"",
+    "operationClass": "destructive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "usuarioUzapi",
+        "table": "instancia"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"usuarioUzapi\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "instancia",
+          "usuarioUzapi"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "drop column \"usuarioUzapi\"",
+        "sql": "ALTER TABLE \"public\".\"instancia\" DROP COLUMN \"usuarioUzapi\""
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"usuarioUzapi\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "instancia",
+          "usuarioUzapi"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.instancia.email",
+    "label": "Add column \"email\" to \"instancia\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "email",
+        "table": "instancia"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"email\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "instancia",
+          "email"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"email\"",
+        "sql": "ALTER TABLE \"public\".\"instancia\" ADD COLUMN \"email\" text"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"email\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "instancia",
+          "email"
+        ]
+      }
+    ]
+  }
+]

@@ -2,6 +2,8 @@ import campanhaRepository from "./CampanhaRepository.js";
 import instanciaRepository from "../Instancia/InstanciaRepository.js";
 import contatoService from "../Contato/ContatoService.js";
 import disparadorService from "../Disparo/DisparadorService.js";
+import resultadoMensagemRepository from "../ResultadoMensagem/ResultadoMensagemRepository.js";
+import { normalizarEmail } from "../../shared/utils/normalizarEmail.js";
 
 class CampanhaService {
   tiposPermitidos = ["texto", "link", "imagem", "video", "audio"];
@@ -22,7 +24,11 @@ class CampanhaService {
     }
 
     mensagens.forEach((mensagem, index) => {
-      if (!mensagem || typeof mensagem.tipo !== "string" || !mensagem.tipo.trim()) {
+      if (
+        !mensagem ||
+        typeof mensagem.tipo !== "string" ||
+        !mensagem.tipo.trim()
+      ) {
         const error = new Error(
           `O tipo da mensagem ${index + 1} é obrigatório.`,
         );
@@ -45,7 +51,10 @@ class CampanhaService {
       /*
        * TEXTO
        */
-      if (tipo === "texto" && (typeof mensagem.texto !== "string" || !mensagem.texto.trim())) {
+      if (
+        tipo === "texto" &&
+        (typeof mensagem.texto !== "string" || !mensagem.texto.trim())
+      ) {
         const error = new Error(
           `A mensagem ${index + 1} precisa possuir texto.`,
         );
@@ -60,7 +69,10 @@ class CampanhaService {
        * Na UZAPI será enviado como type "text"
        * com preview_url = true.
        */
-      if (tipo === "link" && (typeof mensagem.texto !== "string" || !mensagem.texto.trim())) {
+      if (
+        tipo === "link" &&
+        (typeof mensagem.texto !== "string" || !mensagem.texto.trim())
+      ) {
         const error = new Error(
           `A mensagem ${index + 1} precisa possuir o link/texto.`,
         );
@@ -136,18 +148,28 @@ class CampanhaService {
      */
     this.validarMensagens(mensagens);
 
+    // Mantém um destinatário próprio na campanha, mesmo se a instância mudar depois.
+    const usarEmailInstancia = emailRelatorio == null ||
+      (typeof emailRelatorio === "string" && !emailRelatorio.trim());
+    const destinatarioRelatorio = normalizarEmail(
+      usarEmailInstancia ? instancia.email : emailRelatorio,
+    );
+
     const resultadoContatos = contatoService.parsearLista(lista);
     const campanha = await campanhaRepository.cadastrarCompleta(
       {
         instanciaId: Number(instanciaId),
         nome: nome.trim(),
-        emailRelatorio: typeof emailRelatorio === "string" ? emailRelatorio.trim() || null : null,
+        emailRelatorio: destinatarioRelatorio,
       },
       resultadoContatos.validos,
       mensagens.map((mensagem, index) => ({
         posicao: index + 1,
         tipo: mensagem.tipo.toLowerCase(),
-        texto: typeof mensagem.texto === "string" ? mensagem.texto.trim() || null : null,
+        texto:
+          typeof mensagem.texto === "string"
+            ? mensagem.texto.trim() || null
+            : null,
         urlMidia: mensagem.urlMidia || null,
         idMidia: mensagem.idMidia || null,
       })),
@@ -158,6 +180,7 @@ class CampanhaService {
       nome: campanha.nome,
       instanciaId: campanha.instanciaId,
       status: campanha.status,
+      emailRelatorio: campanha.emailRelatorio,
 
       contatos: {
         total: resultadoContatos.quantidadeTotal,
@@ -201,6 +224,161 @@ class CampanhaService {
       quantidadeContatos: contatos.length,
 
       mensagens,
+    };
+  }
+  async progresso(id) {
+    const campanha = await campanhaRepository.buscarPorId(id);
+
+    if (!campanha) {
+      const error = new Error("Campanha não encontrada.");
+
+      error.statusCode = 404;
+      throw error;
+    }
+
+    const [
+      pendentes,
+      processando,
+      concluidos,
+      parciais,
+      falhos,
+      mensagensPendentes,
+      mensagensSucesso,
+      mensagensFalha,
+    ] = await Promise.all([
+      campanhaRepository.contarContatosPorStatus(id, "pendente"),
+
+      campanhaRepository.contarContatosPorStatus(id, "processando"),
+
+      campanhaRepository.contarContatosPorStatus(id, "concluido"),
+
+      campanhaRepository.contarContatosPorStatus(id, "parcial"),
+
+      campanhaRepository.contarContatosPorStatus(id, "falhou"),
+
+      campanhaRepository.contarMensagensPorStatusCampanha(id, "pendente"),
+
+      campanhaRepository.contarMensagensPorStatusCampanha(id, "sucesso"),
+
+      campanhaRepository.contarMensagensPorStatusCampanha(id, "falhou"),
+    ]);
+
+    const totalContatos =
+      pendentes + processando + concluidos + parciais + falhos;
+
+    const processados = concluidos + parciais + falhos;
+
+    const percentual =
+      totalContatos > 0 ? Math.round((processados / totalContatos) * 100) : 0;
+
+    return {
+      campanhaId: campanha.id,
+      nome: campanha.nome,
+      status: campanha.status,
+
+      contatos: {
+        total: totalContatos,
+        pendentes,
+        processando,
+        concluidos,
+        parciais,
+        falhos,
+        processados,
+      },
+
+      mensagens: {
+        pendentes: mensagensPendentes,
+        sucesso: mensagensSucesso,
+        falhou: mensagensFalha,
+
+        total: mensagensPendentes + mensagensSucesso + mensagensFalha,
+      },
+
+      progresso: percentual,
+
+      iniciadaEm: campanha.iniciadaEm,
+      finalizadaEm: campanha.finalizadaEm,
+    };
+  }
+  async relatorio(id) {
+    const campanha = await campanhaRepository.buscarPorId(id);
+
+    if (!campanha) {
+      const error = new Error("Campanha não encontrada.");
+
+      error.statusCode = 404;
+      throw error;
+    }
+
+    const campanhaContatos = await campanhaRepository.buscarContatos(id);
+
+    const mensagens = await campanhaRepository.buscarMensagens(id);
+
+    const contatosRelatorio = [];
+
+    for (const campanhaContato of campanhaContatos) {
+      const contato = await campanhaRepository.buscarContatoPorId(
+        campanhaContato.contatoId,
+      );
+
+      if (!contato) {
+        continue;
+      }
+
+      const mensagensRelatorio = [];
+
+      for (const mensagem of mensagens) {
+        const resultado = await resultadoMensagemRepository.buscarResultado(
+          mensagem.id,
+          campanhaContato.id,
+        );
+
+        mensagensRelatorio.push({
+          mensagemId: mensagem.id,
+          posicao: mensagem.posicao,
+          tipo: mensagem.tipo,
+
+          status: resultado?.status || "pendente",
+
+          idFila: resultado?.idFila || null,
+
+          idMensagem: resultado?.idMensagem || null,
+
+          erro: resultado?.erro || null,
+
+          enviadaEm: resultado?.enviadaEm || null,
+        });
+      }
+
+      contatosRelatorio.push({
+        id: contato.id,
+        nome: contato.nome,
+        telefone: contato.telefone,
+
+        status: campanhaContato.status,
+
+        iniciadoEm: campanhaContato.iniciadoEm,
+
+        finalizadoEm: campanhaContato.finalizadoEm,
+
+        mensagens: mensagensRelatorio,
+      });
+    }
+
+    return {
+      campanhaId: campanha.id,
+      nome: campanha.nome,
+      status: campanha.status,
+
+      iniciadaEm: campanha.iniciadaEm,
+
+      finalizadaEm: campanha.finalizadaEm,
+
+      totalContatos: contatosRelatorio.length,
+
+      quantidadeMensagens: mensagens.length,
+
+      contatos: contatosRelatorio,
     };
   }
 }

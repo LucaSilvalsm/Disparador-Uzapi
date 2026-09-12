@@ -1,0 +1,251 @@
+[
+  {
+    "id": "dropIndex.contato.contato_telefone_idx_15d68930",
+    "label": "Drop index \"contato_telefone_idx_15d68930\"",
+    "operationClass": "destructive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "contato_telefone_idx_15d68930",
+        "table": "contato"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"contato_telefone_idx_15d68930\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"contato_telefone_idx_15d68930\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "drop index \"contato_telefone_idx_15d68930\"",
+        "sql": "DROP INDEX \"public\".\"contato_telefone_idx_15d68930\"",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"contato_telefone_idx_15d68930\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"contato_telefone_idx_15d68930\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "dropCheckConstraint.mensagem.mensagem_tipo_check_46a9b4c2",
+    "label": "Drop check constraint \"mensagem_tipo_check_46a9b4c2\" on \"mensagem\"",
+    "operationClass": "destructive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "mensagem_tipo_check_46a9b4c2",
+        "table": "mensagem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"mensagem_tipo_check_46a9b4c2\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "mensagem_tipo_check_46a9b4c2",
+          "public",
+          "\"public\".\"mensagem\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "drop check constraint \"mensagem_tipo_check_46a9b4c2\"",
+        "sql": "ALTER TABLE \"public\".\"mensagem\" DROP CONSTRAINT \"mensagem_tipo_check_46a9b4c2\""
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"mensagem_tipo_check_46a9b4c2\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "mensagem_tipo_check_46a9b4c2",
+          "public",
+          "\"public\".\"mensagem\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.mensagem.idMidia",
+    "label": "Add column \"idMidia\" to \"mensagem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "idMidia",
+        "table": "mensagem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"idMidia\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "mensagem",
+          "idMidia"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"idMidia\"",
+        "sql": "ALTER TABLE \"public\".\"mensagem\" ADD COLUMN \"idMidia\" text"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"idMidia\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "mensagem",
+          "idMidia"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "setDefault.instancia.atualizadoEm",
+    "label": "Set default on \"instancia\".\"atualizadoEm\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "atualizadoEm",
+        "table": "instancia"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"atualizadoEm\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "instancia",
+          "atualizadoEm"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "set default on \"atualizadoEm\"",
+        "sql": "ALTER TABLE \"public\".\"instancia\" ALTER COLUMN \"atualizadoEm\" SET DEFAULT (now())"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"atualizadoEm\" has a default",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"column_default\" IS NOT NULL)) AS \"result\"",
+        "params": [
+          "public",
+          "instancia",
+          "atualizadoEm"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.contato.contato_telefone_key",
+    "label": "Add unique constraint on \"contato\" (telefone)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "contato_telefone_key",
+        "table": "contato"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"contato_telefone_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "contato_telefone_key",
+          "public",
+          "\"public\".\"contato\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"contato_telefone_key\"",
+        "sql": "ALTER TABLE \"public\".\"contato\" ADD CONSTRAINT \"contato_telefone_key\" UNIQUE (\"telefone\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"contato_telefone_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "contato_telefone_key",
+          "public",
+          "\"public\".\"contato\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.mensagem.mensagem_tipo_check_52a1ae30",
+    "label": "Add check constraint \"mensagem_tipo_check_52a1ae30\" on \"mensagem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "mensagem_tipo_check_52a1ae30",
+        "table": "mensagem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"mensagem_tipo_check_52a1ae30\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "mensagem_tipo_check_52a1ae30",
+          "public",
+          "\"public\".\"mensagem\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"mensagem_tipo_check_52a1ae30\"",
+        "sql": "ALTER TABLE \"public\".\"mensagem\" ADD CONSTRAINT \"mensagem_tipo_check_52a1ae30\" CHECK (\"tipo\" IN ('texto', 'link', 'imagem', 'video', 'audio'))"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"mensagem_tipo_check_52a1ae30\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "mensagem_tipo_check_52a1ae30",
+          "public",
+          "\"public\".\"mensagem\""
+        ]
+      }
+    ]
+  }
+]

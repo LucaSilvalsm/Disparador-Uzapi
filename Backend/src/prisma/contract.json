@@ -507,6 +507,13 @@
                   "kind": "scalar"
                 }
               },
+              "email": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "id": {
                 "nullable": false,
                 "type": {
@@ -536,13 +543,6 @@
                 }
               },
               "token": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "usuarioUzapi": {
                 "nullable": false,
                 "type": {
                   "codecId": "pg/text@1",
@@ -578,6 +578,9 @@
                 "criadoEm": {
                   "column": "criadoEm"
                 },
+                "email": {
+                  "column": "email"
+                },
                 "id": {
                   "column": "id"
                 },
@@ -592,9 +595,6 @@
                 },
                 "token": {
                   "column": "token"
-                },
-                "usuarioUzapi": {
-                  "column": "usuarioUzapi"
                 }
               },
               "namespaceId": "public",
@@ -1204,6 +1204,11 @@
                   "nativeType": "timestamptz",
                   "nullable": false
                 },
+                "email": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
                 "id": {
                   "codecId": "pg/int4@1",
                   "default": {
@@ -1233,11 +1238,6 @@
                   "nullable": false
                 },
                 "token": {
-                  "codecId": "pg/text@1",
-                  "nativeType": "text",
-                  "nullable": false
-                },
-                "usuarioUzapi": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
                   "nullable": false
@@ -1558,7 +1558,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "2cecb585e4d35a2ea646d9784285bf4cdfb970b38fe895ab7453ad601455366d"
+    "storageHash": "61c68d5e567152c5a39f38dfe7036fc9b83ccd8b5cf5d5752deb80c8958f78ef"
   },
   "capabilities": {
     "postgres": {
