@@ -20,6 +20,9 @@ const fusoHorarioApi = process.env.API_TIMEZONE?.trim() || "America/Sao_Paulo";
 new Intl.DateTimeFormat("pt-BR", { timeZone: fusoHorarioApi });
 
 export const config = Object.freeze({
+  publicBaseUrl: (process.env.PUBLIC_BASE_URL || `http://localhost:${process.env.PORT || 5000}`).replace(/\/+$/, ""),
+  retencaoHoras: 24,
+  abandonoSegundos: 180,
   fusoHorarioApi,
   limitePadrao,
   uzapiVersion: versao,

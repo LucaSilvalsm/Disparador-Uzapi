@@ -7,7 +7,7 @@ export function erroHttp(statusCode, message) {
 // Não serializa Error/AxiosError: podem conter headers, SQL e credenciais.
 export function registrarErro(evento, error, contexto = {}) {
   const errorId = randomUUID();
-  const dados = { evento, errorId };
+  const dados = { evento, errorId, horario: new Date().toISOString() };
   for (const chave of ["campanhaId", "campanhaContatoId", "mensagemId"]) {
     if (Number.isInteger(contexto[chave])) dados[chave] = contexto[chave];
   }

@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node --test tests/fluxo.test.js",
+    "test:integration": "node --test tests/integration.test.js",
     "contract:emit": "prisma contract emit",
     "audit:prod": "npm audit --omit=dev"
   },
@@ -20,6 +21,7 @@
     "axios": "^1.20.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
+    "exceljs": "4.4.0",
     "express": "^5.2.1",
     "nodemailer": "^10.0.1"
   },

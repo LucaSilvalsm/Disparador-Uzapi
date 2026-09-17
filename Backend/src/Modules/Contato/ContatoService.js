@@ -147,7 +147,7 @@ class ContatoService {
   }
 
   async prepararContatos(lista) {
-    const resultado = this.parsearLista(lista);
+    const resultado = this.parsearLista(lista);   
 
     const contatos = [];
 

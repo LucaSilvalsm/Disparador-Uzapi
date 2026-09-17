@@ -2,10 +2,10 @@ import campanhaRepository from "./CampanhaRepository.js";
 import instanciaRepository from "../Instancia/InstanciaRepository.js";
 import contatoService from "../Contato/ContatoService.js";
 import disparadorService from "../Disparo/DisparadorService.js";
-import resultadoMensagemRepository from "../ResultadoMensagem/ResultadoMensagemRepository.js";
 import { normalizarEmail } from "../../shared/utils/normalizarEmail.js";
 
-class CampanhaService {
+export class CampanhaService {
+  constructor(repository = campanhaRepository) { this.repository = repository; }
   tiposPermitidos = ["texto", "link", "imagem", "video", "audio"];
 
   validarMensagens(mensagens) {
@@ -25,7 +25,7 @@ class CampanhaService {
 
     mensagens.forEach((mensagem, index) => {
       if (
-        !mensagem ||
+        !mensagem || typeof mensagem !== "object" ||
         typeof mensagem.tipo !== "string" ||
         !mensagem.tipo.trim()
       ) {
@@ -156,7 +156,7 @@ class CampanhaService {
     );
 
     const resultadoContatos = contatoService.parsearLista(lista);
-    const campanha = await campanhaRepository.cadastrarCompleta(
+    const campanha = await this.repository.cadastrarCompleta(
       {
         instanciaId: Number(instanciaId),
         nome: nome.trim(),
@@ -195,11 +195,11 @@ class CampanhaService {
   }
 
   async listar() {
-    return campanhaRepository.listar();
+    return this.repository.listar();
   }
 
   async buscarPorId(id) {
-    const campanha = await campanhaRepository.buscarPorId(id);
+    const campanha = await this.repository.buscarPorId(id);
 
     if (!campanha) {
       const error = new Error("Campanha não encontrada.");
@@ -208,9 +208,9 @@ class CampanhaService {
       throw error;
     }
 
-    const contatos = await campanhaRepository.buscarContatos(id);
+    const contatos = await this.repository.buscarContatos(id);
 
-    const mensagens = await campanhaRepository.buscarMensagens(id);
+    const mensagens = await this.repository.buscarMensagens(id);
 
     return {
       id: campanha.id,
@@ -227,7 +227,7 @@ class CampanhaService {
     };
   }
   async progresso(id) {
-    const campanha = await campanhaRepository.buscarPorId(id);
+    const campanha = await this.repository.buscarPorId(id);
 
     if (!campanha) {
       const error = new Error("Campanha não encontrada.");
@@ -242,27 +242,25 @@ class CampanhaService {
       concluidos,
       parciais,
       falhos,
-      mensagensPendentes,
       mensagensSucesso,
       mensagensFalha,
     ] = await Promise.all([
-      campanhaRepository.contarContatosPorStatus(id, "pendente"),
+      this.repository.contarContatosPorStatus(id, "pendente"),
 
-      campanhaRepository.contarContatosPorStatus(id, "processando"),
+      this.repository.contarContatosPorStatus(id, "processando"),
 
-      campanhaRepository.contarContatosPorStatus(id, "concluido"),
+      this.repository.contarContatosPorStatus(id, "concluido"),
 
-      campanhaRepository.contarContatosPorStatus(id, "parcial"),
+      this.repository.contarContatosPorStatus(id, "parcial"),
 
-      campanhaRepository.contarContatosPorStatus(id, "falhou"),
+      this.repository.contarContatosPorStatus(id, "falhou"),
 
-      campanhaRepository.contarMensagensPorStatusCampanha(id, "pendente"),
+      this.repository.contarMensagensPorStatusCampanha(id, "sucesso"),
 
-      campanhaRepository.contarMensagensPorStatusCampanha(id, "sucesso"),
-
-      campanhaRepository.contarMensagensPorStatusCampanha(id, "falhou"),
+      this.repository.contarMensagensPorStatusCampanha(id, "falhou"),
     ]);
 
+    const quantidadeMensagens = (await this.repository.buscarMensagens(id)).length;
     const totalContatos =
       pendentes + processando + concluidos + parciais + falhos;
 
@@ -284,14 +282,15 @@ class CampanhaService {
         parciais,
         falhos,
         processados,
+        restantes: pendentes + processando,
       },
 
       mensagens: {
-        pendentes: mensagensPendentes,
+        pendentes: Math.max(0, totalContatos * quantidadeMensagens - mensagensSucesso - mensagensFalha),
         sucesso: mensagensSucesso,
         falhou: mensagensFalha,
 
-        total: mensagensPendentes + mensagensSucesso + mensagensFalha,
+        total: totalContatos * quantidadeMensagens,
       },
 
       progresso: percentual,
@@ -301,7 +300,7 @@ class CampanhaService {
     };
   }
   async relatorio(id) {
-    const campanha = await campanhaRepository.buscarPorId(id);
+    const campanha = await this.repository.buscarPorId(id);
 
     if (!campanha) {
       const error = new Error("Campanha não encontrada.");
@@ -310,16 +309,16 @@ class CampanhaService {
       throw error;
     }
 
-    const campanhaContatos = await campanhaRepository.buscarContatos(id);
+    const campanhaContatos = await this.repository.buscarContatos(id);
 
-    const mensagens = await campanhaRepository.buscarMensagens(id);
+    const mensagens = await this.repository.buscarMensagens(id);
 
     const contatosRelatorio = [];
+    const resultados = await this.repository.buscarResultados(campanhaContatos);
+    const porMensagem = new Map(resultados.map((r) => [`${r.campanhaContatoId}:${r.mensagemId}`, r]));
 
     for (const campanhaContato of campanhaContatos) {
-      const contato = await campanhaRepository.buscarContatoPorId(
-        campanhaContato.contatoId,
-      );
+      const contato = await this.repository.buscarDestinatario(campanhaContato);
 
       if (!contato) {
         continue;
@@ -328,10 +327,7 @@ class CampanhaService {
       const mensagensRelatorio = [];
 
       for (const mensagem of mensagens) {
-        const resultado = await resultadoMensagemRepository.buscarResultado(
-          mensagem.id,
-          campanhaContato.id,
-        );
+        const resultado = porMensagem.get(`${campanhaContato.id}:${mensagem.id}`);
 
         mensagensRelatorio.push({
           mensagemId: mensagem.id,

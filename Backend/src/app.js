@@ -2,11 +2,22 @@ import express from "express";
 import router from "./router.js";
 import { registrarErro } from "./shared/utils/erros.js";
 import { serializarDatas } from "./shared/utils/serializarDatas.js";
+import { fileURLToPath } from "node:url";
 
 const app = express();
 app.set("json replacer", serializarDatas);
 
-app.use(express.json());
+app.disable("x-powered-by");
+app.use((req, res, next) => {
+  res.set({ "Cache-Control": "no-store", "Referrer-Policy": "no-referrer", "X-Content-Type-Options": "nosniff",
+    "Content-Security-Policy": "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'" });
+  next();
+});
+app.use(express.json({ limit: "256kb" }));
+app.use("/assets", express.static(fileURLToPath(new URL("../public/assets", import.meta.url))));
+for (const pagina of ["acompanhamento", "relatorio"]) {
+  app.get(`/${pagina}/:idPublico`, (req, res) => res.sendFile(fileURLToPath(new URL("../public/consulta.html", import.meta.url))));
+}
 
 app.use(router);
 

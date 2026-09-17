@@ -475,111 +475,120 @@ Essa estrutura permitirá:
 - enviar um resumo por e-mail, caso essa funcionalidade seja adicionada.
 
 
-## 17. Acesso à campanha sem login tradicional
+## 17. Fluxo temporário sem login tradicional (revisado em 13/09/2026)
 
-O MVP não exigirá inicialmente um sistema completo de cadastro e login com usuário e senha.
+O cliente preenche um único formulário com Phone ID, token Uzapi, e-mail,
+lista de contatos e de uma a três mensagens. O backend recebe tudo em
+`POST /disparos`, cria a campanha em transaction e responde `202`.
+Não existe cadastro de usuário, senha, associação e-mail + Phone ID como
+autenticação, nem acesso público ao histórico de uma instância.
 
-Para permitir que o cliente acompanhe uma campanha mesmo após atualizar a página, fechar o navegador ou trocar de dispositivo, cada campanha deverá possuir uma forma segura e exclusiva de acesso.
+### 17.1. Reutilização do Phone ID e limite móvel
 
-Fluxo conceitual:
+A instância é reutilizada internamente pelo Phone ID. O mesmo e-mail pode
+enviar campanhas em vários Phone IDs, e novas campanhas de um Phone ID
+podem informar outro e-mail. O e-mail pertence à campanha, não concede
+acesso a campanhas anteriores e não altera o destinatário delas.
 
-```text
-Usuário informa:
-token
-phone_number_id
-e-mail
-        ↓
-Backend valida a instância Uzapi
-        ↓
-Cria campanha
-        ↓
-Gera identificação e credencial segura da campanha
-        ↓
-Usuário inicia o disparo
-        ↓
-PostgreSQL mantém:
-campanha
-contatos
-mensagens
-progresso
-resultados
-        ↓
-Frontend consulta o progresso
-        ↓
-Campanha finaliza
-        ↓
-Relatório em tela
-+
-e-mail da campanha
-```
+Toda submissão exige novamente o token Uzapi: conhecer o Phone ID nunca
+permite usar credenciais armazenadas de outra campanha. Os campos são
+validados localmente; não se presume um endpoint externo de validação da
+instância. A autorização na Uzapi é conferida no envio.
 
-### 17.1. Link seguro para acompanhamento
+O padrão é 250 contatos em uma janela móvel de 24 horas, configurável.
+Uma campanha com 20 contatos deixa 230 disponíveis para a próxima,
+inclusive no mesmo dia. Não se desativa automaticamente a instância nem
+se impõe espera fixa de 24 horas. Existe apenas uma campanha em andamento
+por Phone ID. Instâncias bloqueadas pelo administrador continuam bloqueadas.
 
-O sistema deverá permitir que o usuário recupere o acompanhamento através de um link exclusivo.
+Cada contato reservado conta uma unidade, inclusive falhas e contatos
+repetidos em campanhas diferentes; até três mensagens do mesmo contato
+consomem uma unidade. As verificações e reservas são serializadas por
+bloqueio da instância no PostgreSQL.
 
-Exemplo conceitual:
+### 17.2. Acesso por links exclusivos
 
-```text
-https://disparador.uzapi.com.br/campaign/7ae231...
-```
+No início, o backend gera um token aleatório de 256 bits e agenda um
+e-mail com o link de progresso. O estado vem do PostgreSQL e a página
+consulta a API a cada cinco segundos.
 
-O identificador visível da campanha não deverá, sozinho, conceder acesso aos dados. A solução deverá utilizar uma credencial segura associada à campanha, token de acesso ou estratégia equivalente.
+Ao terminar (inclusive por falha), o link de progresso é revogado.
+Outro token independente permite consultar o relatório, enviado por
+outro e-mail. O ID público sozinho não autoriza nenhuma consulta.
 
-Esse mecanismo permitirá:
+O segredo fica no fragmento do link (`#token=...`), que não é enviado em
+requisições HTTP de navegação. A página troca esse segredo por um cookie
+HttpOnly, SameSite=Strict, restrito à campanha/finalidade; em produção,
+também Secure. Depois remove o fragmento da barra de endereço.
+A API também aceita o token no cabeçalho Authorization Bearer.
+Atualizar a página mantém o acesso pelo cookie; outro dispositivo usa o
+link original do e-mail. Não se usa localStorage para guardar segredos.
 
-- atualizar a página sem perder a referência da campanha;
-- fechar e reabrir o navegador;
-- acompanhar posteriormente;
-- abrir o acompanhamento em outro dispositivo;
-- acessar o relatório final sem possuir uma conta tradicional no MVP.
+Tokens de consulta são verificados por hash. O token Uzapi e as URLs
+aguardando envio por e-mail são cifrados com AES-256-GCM e contexto por
+campanha. O token de envio é apagado na finalização; URLs cifradas saem
+da outbox após o envio ou a revogação.
 
-Tokens sensíveis deverão ser gerados com aleatoriedade criptograficamente segura e armazenados de maneira adequada, preferencialmente mantendo no banco apenas uma representação protegida quando tecnicamente aplicável.
+Quem possuir o link pode consultar os dados daquela campanha. E-mail
+não comprova identidade nem propriedade da instância; links devem ser
+tratados como confidenciais. Não há recuperação de histórico por e-mail.
 
-### 17.2. Referência local
+### 17.3. Relatório e retenção
 
-O navegador poderá manter uma referência da campanha para melhorar a experiência após um `F5` ou retorno ao site.
+O relatório mostra resultados por contato e mensagem e permite baixar
+CSV ou Excel (`.xlsx`, não o formato antigo `.xls`). Acesso e downloads
+expiram exatamente 24 horas após a finalização, mesmo se o banco ainda
+não tiver sido limpo. Sucesso significa aceitação pela Uzapi, não prova
+de entrega no WhatsApp.
 
-Essa referência não será a fonte do progresso.
+A manutenção verifica a limpeza a cada 30 segundos enquanto o backend
+está em execução. Exclui campanha temporária, destinatários próprios,
+mensagens, resultados e notificações. Exclui a instância temporária
+somente quando nenhuma outra campanha a utiliza e nunca apaga reservas
+ainda necessárias ao limite móvel. Se o servidor estiver parado, a
+limpeza física ocorrerá depois de sua volta; o prazo de acesso não muda.
 
-```text
-Navegador
-    ↓
-identifica campanha
-    ↓
-Backend
-    ↓
-PostgreSQL
-    ↓
-estado atual
-```
+Novos destinatários são guardados em CampanhaContato, sem compartilhar
+nome ou telefone via catálogo global. Registros legados e instâncias
+administrativas não são apagados retroativamente. Backups, e-mails já
+recebidos e arquivos exportados não podem ser apagados por essa rotina.
 
-Campanha, progresso e resultados continuarão persistidos no backend.
+### 17.4. Confiabilidade e administração
 
-### 17.3. E-mail da instância e da campanha
+`Idempotency-Key` é obrigatório: repetir a mesma chave e os mesmos dados
+não inicia outra campanha. Outra campanha usa outra chave. A proteção
+dura enquanto o registro temporário existir; após a exclusão, não há
+histórico permanente da chave.
 
-O usuário deverá informar um e-mail válido ao cadastrar uma instância.
-Esse endereço será copiado para `emailRelatorio` ao criar uma campanha,
-salvo quando um destinatário específico for informado na própria campanha.
-Alterar o e-mail da instância não altera o destinatário das campanhas já criadas.
+O motor continua no Node.js, fora da requisição HTTP, com estado
+persistido. Cada nova campanha em execução registra sinal de atividade
+a cada 15 segundos. Depois de 180 segundos sem sinal, a manutenção a
+encerra como falha e agenda o relatório; não retoma nem reenvia mensagens
+automaticamente. Pendências podem representar envios não realizados ou
+resultados não confirmados. Campanhas antigas não são retomadas nem
+finalizadas automaticamente por essa rotina.
 
-Instâncias anteriores à atualização poderão manter o campo `email` nulo
-até que o usuário o preencha. Para criar novas campanhas, será necessário
-preencher esse campo ou informar um `emailRelatorio` válido.
+E-mails usam uma outbox persistida com retentativas e reserva de trabalho.
+Falhas de SMTP não desfazem a campanha e não provocam reenvio ao WhatsApp.
+Uma falha de confirmação após aceitação pelo SMTP pode gerar e-mail
+duplicado; não se promete entrega exatamente uma vez. Se o progresso já
+terminou antes de o e-mail conseguir sair, envia-se apenas o relatório
+ainda válido. O prazo do relatório não reinicia por atraso de e-mail.
 
-Inicialmente ele poderá ser utilizado para envio do relatório ao término do disparo.
+Rotas antigas de instâncias, contatos e campanhas são administrativas:
+exigem `ADMIN_API_TOKEN` em Authorization Bearer. Essa chave é separada
+dos tokens Uzapi e de consulta, nunca vai para o frontend. O cliente
+comum utiliza apenas a submissão e os links da sua campanha.
 
-Como evolução, o e-mail também poderá receber um link seguro para retornar à página de acompanhamento.
+### 17.5. Configuração e limites desta etapa
 
-### 17.4. Credenciais da Uzapi não serão credenciais do disparador
+Configure `PUBLIC_BASE_URL` com o domínio HTTPS, SMTP, uma chave
+`CAMPAIGN_ENCRYPTION_KEY` de 32 bytes em hexadecimal e um
+`ADMIN_API_TOKEN` forte. Guarde essas chaves fora do Git. Alterar a chave
+de criptografia durante campanhas existentes invalida credenciais,
+URLs pendentes e a verificação de repetição de requisições.
 
-`token` e `phone_number_id` identificam/configuram a instância Uzapi e não deverão funcionar como login permanente do usuário no disparador. A API atual não exige `username`. O e-mail também não substitui a credencial segura de acesso à campanha.
-
-O token da Uzapi será tratado como credencial sensível e utilizado pelo backend somente para comunicação autorizada com a API.
-
-O frontend deverá trabalhar com a identificação/credencial própria da campanha depois que a instância estiver configurada.
-
-### 17.5. Evolução futura
-
-Caso o disparador evolua para uma plataforma com histórico de campanhas, múltiplas instâncias, gerenciamento de contatos e configurações permanentes, poderá ser adicionado um sistema completo de autenticação.
-
-Também poderá ser avaliada futuramente uma integração com a autenticação oficial da própria plataforma Uzapi, caso exista uma interface apropriada para isso.
+As páginas mínimas de consulta já são servidas pelo Express. O formulário
+Vue completo, login administrativo com usuários/perfis, fila dedicada,
+pausa/retomada e confirmação de entrega por webhook não fazem parte
+desta etapa. Consulte o README do backend para endpoints e testes.

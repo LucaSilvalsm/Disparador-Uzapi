@@ -1,0 +1,915 @@
+[
+  {
+    "id": "table.notificacao_campanha",
+    "label": "Create table \"notificacao_campanha\"",
+    "summary": "Creates table \"notificacao_campanha\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "notificacao_campanha"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"notificacao_campanha\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"notificacao_campanha\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"notificacao_campanha\"",
+        "sql": "CREATE TABLE \"public\".\"notificacao_campanha\" (\n  \"campanhaId\" int4 NOT NULL,\n  \"conteudoCifrado\" text,\n  \"criadaEm\" timestamptz DEFAULT (now()) NOT NULL,\n  \"disponivelEm\" timestamptz DEFAULT (now()) NOT NULL,\n  \"enviadaEm\" timestamptz,\n  \"id\" SERIAL NOT NULL,\n  \"tentativas\" int4 DEFAULT 0 NOT NULL,\n  \"tipo\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"notificacao_campanha\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"notificacao_campanha\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.campanha.chaveIdempotencia",
+    "label": "Add column \"chaveIdempotencia\" to \"campanha\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "chaveIdempotencia",
+        "table": "campanha"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"chaveIdempotencia\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "campanha",
+          "chaveIdempotencia"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"chaveIdempotencia\"",
+        "sql": "ALTER TABLE \"public\".\"campanha\" ADD COLUMN \"chaveIdempotencia\" text"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"chaveIdempotencia\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "campanha",
+          "chaveIdempotencia"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.campanha.executorId",
+    "label": "Add column \"executorId\" to \"campanha\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "executorId",
+        "table": "campanha"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"executorId\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "campanha",
+          "executorId"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"executorId\"",
+        "sql": "ALTER TABLE \"public\".\"campanha\" ADD COLUMN \"executorId\" text"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"executorId\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "campanha",
+          "executorId"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.campanha.expiraEm",
+    "label": "Add column \"expiraEm\" to \"campanha\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "expiraEm",
+        "table": "campanha"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"expiraEm\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "campanha",
+          "expiraEm"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"expiraEm\"",
+        "sql": "ALTER TABLE \"public\".\"campanha\" ADD COLUMN \"expiraEm\" timestamptz"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"expiraEm\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "campanha",
+          "expiraEm"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.campanha.hashSolicitacao",
+    "label": "Add column \"hashSolicitacao\" to \"campanha\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "hashSolicitacao",
+        "table": "campanha"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"hashSolicitacao\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "campanha",
+          "hashSolicitacao"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"hashSolicitacao\"",
+        "sql": "ALTER TABLE \"public\".\"campanha\" ADD COLUMN \"hashSolicitacao\" text"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"hashSolicitacao\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "campanha",
+          "hashSolicitacao"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.campanha.hashTokenRelatorio",
+    "label": "Add column \"hashTokenRelatorio\" to \"campanha\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "hashTokenRelatorio",
+        "table": "campanha"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"hashTokenRelatorio\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "campanha",
+          "hashTokenRelatorio"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"hashTokenRelatorio\"",
+        "sql": "ALTER TABLE \"public\".\"campanha\" ADD COLUMN \"hashTokenRelatorio\" text"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"hashTokenRelatorio\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "campanha",
+          "hashTokenRelatorio"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.campanha.idPublico",
+    "label": "Add column \"idPublico\" to \"campanha\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "idPublico",
+        "table": "campanha"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"idPublico\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "campanha",
+          "idPublico"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"idPublico\"",
+        "sql": "ALTER TABLE \"public\".\"campanha\" ADD COLUMN \"idPublico\" text"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"idPublico\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "campanha",
+          "idPublico"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.campanha.temporaria",
+    "label": "Add column \"temporaria\" to \"campanha\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "temporaria",
+        "table": "campanha"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"temporaria\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "campanha",
+          "temporaria"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"temporaria\"",
+        "sql": "ALTER TABLE \"public\".\"campanha\" ADD COLUMN \"temporaria\" bool DEFAULT false NOT NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"temporaria\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "campanha",
+          "temporaria"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.campanha.tokenEnvioCifrado",
+    "label": "Add column \"tokenEnvioCifrado\" to \"campanha\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "tokenEnvioCifrado",
+        "table": "campanha"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"tokenEnvioCifrado\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "campanha",
+          "tokenEnvioCifrado"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"tokenEnvioCifrado\"",
+        "sql": "ALTER TABLE \"public\".\"campanha\" ADD COLUMN \"tokenEnvioCifrado\" text"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"tokenEnvioCifrado\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "campanha",
+          "tokenEnvioCifrado"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.campanha.ultimoSinalEm",
+    "label": "Add column \"ultimoSinalEm\" to \"campanha\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "ultimoSinalEm",
+        "table": "campanha"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"ultimoSinalEm\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "campanha",
+          "ultimoSinalEm"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"ultimoSinalEm\"",
+        "sql": "ALTER TABLE \"public\".\"campanha\" ADD COLUMN \"ultimoSinalEm\" timestamptz"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"ultimoSinalEm\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "campanha",
+          "ultimoSinalEm"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.campanha_contato.nome",
+    "label": "Add column \"nome\" to \"campanha_contato\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "nome",
+        "table": "campanha_contato"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"nome\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "campanha_contato",
+          "nome"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"nome\"",
+        "sql": "ALTER TABLE \"public\".\"campanha_contato\" ADD COLUMN \"nome\" text"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"nome\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "campanha_contato",
+          "nome"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.campanha_contato.telefone",
+    "label": "Add column \"telefone\" to \"campanha_contato\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "telefone",
+        "table": "campanha_contato"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"telefone\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "campanha_contato",
+          "telefone"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"telefone\"",
+        "sql": "ALTER TABLE \"public\".\"campanha_contato\" ADD COLUMN \"telefone\" text"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"telefone\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "campanha_contato",
+          "telefone"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.instancia.temporaria",
+    "label": "Add column \"temporaria\" to \"instancia\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "temporaria",
+        "table": "instancia"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"temporaria\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "instancia",
+          "temporaria"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"temporaria\"",
+        "sql": "ALTER TABLE \"public\".\"instancia\" ADD COLUMN \"temporaria\" bool DEFAULT false NOT NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"temporaria\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "instancia",
+          "temporaria"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "alterNullability.dropNotNull.campanha_contato.contatoId",
+    "label": "Drop NOT NULL on \"campanha_contato\".\"contatoId\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "contatoId",
+        "table": "campanha_contato"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"contatoId\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "campanha_contato",
+          "contatoId"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "drop NOT NULL on \"contatoId\"",
+        "sql": "ALTER TABLE \"public\".\"campanha_contato\" ALTER COLUMN \"contatoId\" DROP NOT NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"contatoId\" is nullable",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"is_nullable\" = $4)) AS \"result\"",
+        "params": [
+          "public",
+          "campanha_contato",
+          "contatoId",
+          "YES"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.campanha.campanha_chaveIdempotencia_key",
+    "label": "Add unique constraint on \"campanha\" (chaveIdempotencia)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "campanha_chaveIdempotencia_key",
+        "table": "campanha"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"campanha_chaveIdempotencia_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "campanha_chaveIdempotencia_key",
+          "public",
+          "\"public\".\"campanha\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"campanha_chaveIdempotencia_key\"",
+        "sql": "ALTER TABLE \"public\".\"campanha\" ADD CONSTRAINT \"campanha_chaveIdempotencia_key\" UNIQUE (\"chaveIdempotencia\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"campanha_chaveIdempotencia_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "campanha_chaveIdempotencia_key",
+          "public",
+          "\"public\".\"campanha\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.campanha.campanha_idPublico_key",
+    "label": "Add unique constraint on \"campanha\" (idPublico)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "campanha_idPublico_key",
+        "table": "campanha"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"campanha_idPublico_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "campanha_idPublico_key",
+          "public",
+          "\"public\".\"campanha\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"campanha_idPublico_key\"",
+        "sql": "ALTER TABLE \"public\".\"campanha\" ADD CONSTRAINT \"campanha_idPublico_key\" UNIQUE (\"idPublico\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"campanha_idPublico_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "campanha_idPublico_key",
+          "public",
+          "\"public\".\"campanha\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.campanha_contato.campanha_contato_campanhaId_telefone_key",
+    "label": "Add unique constraint on \"campanha_contato\" (campanhaId, telefone)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "campanha_contato_campanhaId_telefone_key",
+        "table": "campanha_contato"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"campanha_contato_campanhaId_telefone_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "campanha_contato_campanhaId_telefone_key",
+          "public",
+          "\"public\".\"campanha_contato\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"campanha_contato_campanhaId_telefone_key\"",
+        "sql": "ALTER TABLE \"public\".\"campanha_contato\" ADD CONSTRAINT \"campanha_contato_campanhaId_telefone_key\" UNIQUE (\"campanhaId\", \"telefone\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"campanha_contato_campanhaId_telefone_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "campanha_contato_campanhaId_telefone_key",
+          "public",
+          "\"public\".\"campanha_contato\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.notificacao_campanha.notificacao_campanha_campanhaId_tipo_key",
+    "label": "Add unique constraint on \"notificacao_campanha\" (campanhaId, tipo)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "notificacao_campanha_campanhaId_tipo_key",
+        "table": "notificacao_campanha"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"notificacao_campanha_campanhaId_tipo_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "notificacao_campanha_campanhaId_tipo_key",
+          "public",
+          "\"public\".\"notificacao_campanha\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"notificacao_campanha_campanhaId_tipo_key\"",
+        "sql": "ALTER TABLE \"public\".\"notificacao_campanha\" ADD CONSTRAINT \"notificacao_campanha_campanhaId_tipo_key\" UNIQUE (\"campanhaId\", \"tipo\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"notificacao_campanha_campanhaId_tipo_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "notificacao_campanha_campanhaId_tipo_key",
+          "public",
+          "\"public\".\"notificacao_campanha\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.campanha.campanha_expiraEm_idx_775818ab",
+    "label": "Create index \"campanha_expiraEm_idx_775818ab\" on \"campanha\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "campanha_expiraEm_idx_775818ab",
+        "table": "campanha"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"campanha_expiraEm_idx_775818ab\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"campanha_expiraEm_idx_775818ab\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"campanha_expiraEm_idx_775818ab\"",
+        "sql": "CREATE INDEX \"campanha_expiraEm_idx_775818ab\" ON \"public\".\"campanha\" (\"expiraEm\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"campanha_expiraEm_idx_775818ab\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"campanha_expiraEm_idx_775818ab\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.notificacao_campanha.notificacao_campanha_campanhaId_idx_6cd07fa5",
+    "label": "Create index \"notificacao_campanha_campanhaId_idx_6cd07fa5\" on \"notificacao_campanha\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "notificacao_campanha_campanhaId_idx_6cd07fa5",
+        "table": "notificacao_campanha"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"notificacao_campanha_campanhaId_idx_6cd07fa5\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"notificacao_campanha_campanhaId_idx_6cd07fa5\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"notificacao_campanha_campanhaId_idx_6cd07fa5\"",
+        "sql": "CREATE INDEX \"notificacao_campanha_campanhaId_idx_6cd07fa5\" ON \"public\".\"notificacao_campanha\" (\"campanhaId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"notificacao_campanha_campanhaId_idx_6cd07fa5\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"notificacao_campanha_campanhaId_idx_6cd07fa5\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.notificacao_campanha.notificacao_campanha_disponivelEm_idx_83801283",
+    "label": "Create index \"notificacao_campanha_disponivelEm_idx_83801283\" on \"notificacao_campanha\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "notificacao_campanha_disponivelEm_idx_83801283",
+        "table": "notificacao_campanha"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"notificacao_campanha_disponivelEm_idx_83801283\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"notificacao_campanha_disponivelEm_idx_83801283\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"notificacao_campanha_disponivelEm_idx_83801283\"",
+        "sql": "CREATE INDEX \"notificacao_campanha_disponivelEm_idx_83801283\" ON \"public\".\"notificacao_campanha\" (\"disponivelEm\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"notificacao_campanha_disponivelEm_idx_83801283\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"notificacao_campanha_disponivelEm_idx_83801283\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.notificacao_campanha.notificacao_campanha_campanhaId_fkey",
+    "label": "Add foreign key \"notificacao_campanha_campanhaId_fkey\" on \"notificacao_campanha\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "notificacao_campanha_campanhaId_fkey",
+        "table": "notificacao_campanha"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"notificacao_campanha_campanhaId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "notificacao_campanha_campanhaId_fkey",
+          "public",
+          "\"public\".\"notificacao_campanha\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"notificacao_campanha_campanhaId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"notificacao_campanha\"\nADD CONSTRAINT \"notificacao_campanha_campanhaId_fkey\"\nFOREIGN KEY (\"campanhaId\")\nREFERENCES \"public\".\"campanha\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"notificacao_campanha_campanhaId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "notificacao_campanha_campanhaId_fkey",
+          "public",
+          "\"public\".\"notificacao_campanha\""
+        ]
+      }
+    ]
+  }
+]

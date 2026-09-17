@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Acompanhamento da campanha — Uzapi</title>
+  <link rel="stylesheet" href="/assets/consulta.css">
+  <script src="/assets/consulta.js" defer></script>
+</head>
+<body>
+  <main>
+    <p class="marca">DISPARADOR UZAPI</p>
+    <h1 id="titulo">Sua campanha</h1>
+    <p id="aviso" role="status" aria-live="polite">Verificando o acesso…</p>
+    <section id="dados" hidden>
+      <p id="status"></p>
+      <progress id="barra" max="100" value="0" aria-label="Progresso da campanha"></progress>
+      <p id="resumo"></p>
+      <p id="prazo"></p>
+      <nav id="exportacoes" aria-label="Exportar relatório" hidden>
+        <a id="csv">Baixar CSV</a>
+        <a id="xlsx">Baixar Excel (.xlsx)</a>
+      </nav>
+      <div class="tabela"><table id="tabela" hidden>
+        <thead><tr><th>Nome</th><th>Telefone</th><th>Resultado</th><th>Mensagens</th></tr></thead>
+        <tbody id="contatos"></tbody>
+      </table></div>
+    </section>
+    <p class="nota">O link é confidencial e permite consultar somente esta campanha. O relatório expira 24 horas após a finalização.</p>
+  </main>
+</body>
+</html>

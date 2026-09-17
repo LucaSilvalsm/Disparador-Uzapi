@@ -7,6 +7,9 @@ import uzapiClient from "../../shared/Integration/Uzapi.js";
 import { config, validarLimiteContatos } from "../../shared/config.js";
 import { erroHttp, registrarErro } from "../../shared/utils/erros.js";
 import campanhaRelatorioService from "../Campanha/CampanhaRelatorioService.js";
+import cicloCampanha, { executorId } from "../Campanha/CicloCampanhaService.js";
+import { decifrar } from "../../shared/utils/segredos.js";
+import notificacoes from "../Campanha/NotificacaoCampanhaService.js";
 
 class DisparadorService {
   personalizarTexto(texto, contato) {
@@ -84,15 +87,30 @@ class DisparadorService {
       },
     );
 
-    // A transaction já confirmou o início; a resposta HTTP não aguarda os envios.
+    this.agendar(campanhaId, campanha.instanciaId);
+    return { campanhaId, status: "em_andamento" };
+  }
+
+  agendar(campanhaId, instanciaId) {
+    // O agendamento ocorre somente DEPOIS do commit, sem segurar a resposta HTTP.
     setImmediate(() => {
-      void this.processar(campanhaId, campanha.instanciaId).catch(
+      void notificacoes.processarPendentes(campanhaId)
+        .catch((error) => registrarErro("falha_notificacao_campanha", error, { campanhaId }));
+      let sinalizando = false;
+      const heartbeat = setInterval(async () => {
+        if (sinalizando) return;
+        sinalizando = true;
+        try { await cicloCampanha.sinalizar(campanhaId); }
+        catch (error) { registrarErro("falha_heartbeat", error, { campanhaId }); }
+        finally { sinalizando = false; }
+      }, 15000);
+      heartbeat.unref();
+      console.info(JSON.stringify({ evento: "campanha_iniciada", campanhaId, horario: new Date().toISOString() }));
+      void this.processar(campanhaId, instanciaId).catch(
         async (error) => {
           registrarErro("campanha_interrompida", error, { campanhaId });
           try {
-            await campanhaRepository.atualizarStatus(campanhaId, "falhou", {
-              finalizadaEm: this.agora(),
-            });
+            await this.finalizar(campanhaId, "falhou");
           } catch (persistenciaError) {
             registrarErro(
               "falha_ao_persistir_estado_campanha",
@@ -101,18 +119,36 @@ class DisparadorService {
             );
           }
         },
-      );
+      ).finally(() => clearInterval(heartbeat));
     });
-    return { campanhaId, status: "em_andamento" };
+  }
+
+  async finalizar(campanhaId, status) {
+    const campanha = await cicloCampanha.finalizar(campanhaId, status);
+    if (!campanha) return;
+    console.info(JSON.stringify({ evento: "campanha_finalizada", campanhaId, status, horario: new Date().toISOString() }));
+    if (!campanha.temporaria) {
+      try { await campanhaRelatorioService.enviar(campanhaId); }
+      catch (error) { registrarErro("falha_envio_relatorio_email", error, { campanhaId }); }
+    }
+  }
+
+  async podeContinuar(campanhaId) {
+    const campanha = await disparoRepository.buscarCampanha(campanhaId);
+    return campanha?.status === "em_andamento" && (!campanha.temporaria || campanha.executorId === executorId);
   }
 
   async reservarProximo(campanhaId, instanciaId) {
     return disparoRepository.comInstanciaBloqueada(
       instanciaId,
       async (repo, instancia) => {
-        this.validarInstancia(instancia);
         const campanha = await repo.buscarCampanha(campanhaId);
         if (campanha?.status !== "em_andamento") return { encerrada: true };
+        if (campanha.temporaria && campanha.executorId !== executorId) return { encerrada: true };
+        const credencial = campanha.temporaria ? {
+          ...instancia, token: decifrar(campanha.tokenEnvioCifrado, `uzapi:${campanha.idPublico}`),
+        } : instancia;
+        this.validarInstancia(credencial);
         const pendente = await repo.proximoPendente(campanhaId);
         if (!pendente) return { concluida: true };
         const agora = this.agora();
@@ -122,7 +158,7 @@ class DisparadorService {
         const contato = await repo.reservarContato(pendente.id, agora);
         if (!contato)
           throw erroHttp(409, "Contato já reservado por outro processamento.");
-        return { contato, instancia };
+        return { contato, instancia: credencial };
       },
     );
   }
@@ -152,31 +188,16 @@ class DisparadorService {
         reserva,
         mensagens,
       );
+      if (resultado.encerrada) return;
       algumSucesso ||= resultado.sucessos > 0;
       if (resultado.erroAutenticacao) {
         // Credencial recusada afeta a instância inteira. Evita repetir o mesmo 401/403.
-        await campanhaRepository.atualizarStatus(campanhaId, "falhou", {
-          finalizadaEm: this.agora(),
-        });
+        await this.finalizar(campanhaId, "falhou");
         return;
       }
       contatoAnterior = true;
     }
-    await campanhaRepository.atualizarStatus(
-      campanhaId,
-      algumSucesso ? "concluida" : "falhou",
-      {
-        finalizadaEm: this.agora(),
-      },
-    );
-
-    try {
-      await campanhaRelatorioService.enviar(campanhaId);
-    } catch (error) {
-      registrarErro("falha_envio_relatorio_email", error, {
-        campanhaId,
-      });
-    }
+    await this.finalizar(campanhaId, algumSucesso ? "concluida" : "falhou");
   }
 
   async processarContato(
@@ -184,15 +205,14 @@ class DisparadorService {
     { contato: campanhaContato, instancia },
     mensagens,
   ) {
-    const contato = await campanhaRepository.buscarContatoPorId(
-      campanhaContato.contatoId,
-    );
+    const contato = await campanhaRepository.buscarDestinatario(campanhaContato);
     let sucessos = 0;
     let erroAutenticacao = false;
     if (contato) {
       for (let index = 0; index < mensagens.length; index++) {
         if (index > 0)
           await this.aguardar(this.intervalo(config.intervaloMensagens));
+        if (!(await this.podeContinuar(campanhaId))) return { encerrada: true };
         const original = mensagens[index];
         const mensagem = {
           ...original,
@@ -210,6 +230,7 @@ class DisparadorService {
             mensagem,
           });
         } catch (error) {
+          if (!(await this.podeContinuar(campanhaId))) return { encerrada: true };
           registrarErro("falha_envio_uzapi", error, {
             campanhaId,
             campanhaContatoId: campanhaContato.id,
@@ -226,6 +247,7 @@ class DisparadorService {
         }
         // Se o envio foi aceito e esta escrita falhar, não o classifica como envio recusado.
         // O registro pendente fica disponível para futura reconciliação, sem reenvio automático.
+        if (!(await this.podeContinuar(campanhaId))) return { encerrada: true };
         const identificador = (valor) =>
           ["string", "number"].includes(typeof valor) ? String(valor) : null;
         await resultadoMensagemRepository.marcarSucesso(resultado.id, {

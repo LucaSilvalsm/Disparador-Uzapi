@@ -40,12 +40,13 @@ enum StatusMensagem {
 model Instancia {
   id                   Int      @id @default(autoincrement())
   nome                 String
-  // Nulo apenas para permitir a migração de instâncias antigas sem e-mail.
+  // Cadastro administrativo/legado. Novos formulários guardam o e-mail na campanha.
   email                String?
   token                String
   idNumeroTelefone     String   @unique
   limiteDiarioContatos Int      @default(250)
   ativo                Boolean  @default(true)
+  temporaria           Boolean  @default(false)
 
   criadoEm             DateTime @default(now())
   atualizadoEm         DateTime @default(now())
@@ -63,6 +64,15 @@ model Campanha {
   status         StatusCampanha @default(RASCUNHO)
 
   hashTokenAcesso String?
+  hashTokenRelatorio String?
+  idPublico String? @unique
+  temporaria Boolean @default(false)
+  tokenEnvioCifrado String?
+  chaveIdempotencia String? @unique
+  hashSolicitacao String?
+  expiraEm DateTime?
+  executorId String?
+  ultimoSinalEm DateTime?
 
   iniciadaEm   DateTime?
   finalizadaEm DateTime?
@@ -75,9 +85,11 @@ model Campanha {
 
   contatos  CampanhaContato[]
   mensagens Mensagem[]
+  notificacoes NotificacaoCampanha[]
 
   @@index([instanciaId])
   @@index([status])
+  @@index([expiraEm])
   @@map("campanha")
 }
 
@@ -95,7 +107,10 @@ model Contato {
 model CampanhaContato {
   id         Int                    @id @default(autoincrement())
   campanhaId Int
-  contatoId  Int
+  contatoId  Int?
+  // Novos disparos guardam seus destinatários aqui, sem compartilhar dados pessoais.
+  telefone   String?
+  nome       String?
 
   status StatusContatoCampanha @default(PENDENTE)
 
@@ -108,7 +123,7 @@ model CampanhaContato {
     references: [id]
   )
 
-  contato Contato @relation(
+  contato Contato? @relation(
     fields: [contatoId],
     references: [id]
   )
@@ -116,6 +131,7 @@ model CampanhaContato {
   resultados ResultadoMensagem[]
 
   @@unique([campanhaId, contatoId])
+  @@unique([campanhaId, telefone])
   @@index([campanhaId])
   @@index([contatoId])
   @@index([status])
@@ -174,4 +190,21 @@ model ResultadoMensagem {
   @@index([campanhaContatoId])
   @@index([status])
   @@map("resultado_mensagem")
+}
+
+model NotificacaoCampanha {
+  id Int @id @default(autoincrement())
+  campanhaId Int
+  tipo String
+  conteudoCifrado String?
+  tentativas Int @default(0)
+  disponivelEm DateTime @default(now())
+  enviadaEm DateTime?
+  criadaEm DateTime @default(now())
+
+  campanha Campanha @relation(fields: [campanhaId], references: [id])
+
+  @@unique([campanhaId, tipo])
+  @@index([disponivelEm])
+  @@map("notificacao_campanha")
 }

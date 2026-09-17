@@ -1,8 +1,9 @@
 import { db } from "../../prisma/db.js";
 
-class CampanhaRepository {
+export class CampanhaRepository {
+  constructor(executor = db) { this.db = executor; }
   async cadastrarCompleta(data, contatos, mensagens) {
-    return db.transaction(async (tx) => {
+    return this.db.transaction(async (tx) => {
       const campanha = await tx.orm.public.Campanha.create(data);
       // Ordenação consistente evita bloqueios cruzados ao reutilizar contatos.
       const contatosPorTelefone = new Map();
@@ -33,11 +34,11 @@ class CampanhaRepository {
   }
 
   async cadastrar(data) {
-    return db.orm.public.Campanha.create(data);
+    return this.db.orm.public.Campanha.create(data);
   }
 
   async listar() {
-    return db.orm.public.Campanha.select(
+    return this.db.orm.public.Campanha.select(
       "id",
       "instanciaId",
       "nome",
@@ -51,36 +52,46 @@ class CampanhaRepository {
   }
 
   async buscarPorId(id) {
-    return db.orm.public.Campanha.where({
+    return this.db.orm.public.Campanha.where({
       id,
     }).first();
   }
 
   async criarCampanhaContato(campanhaId, contatoId) {
-    return db.orm.public.CampanhaContato.create({
+    return this.db.orm.public.CampanhaContato.create({
       campanhaId,
       contatoId,
     });
   }
 
   async criarMensagem(data) {
-    return db.orm.public.Mensagem.create(data);
+    return this.db.orm.public.Mensagem.create(data);
   }
 
   async buscarContatos(campanhaId) {
-    return db.orm.public.CampanhaContato.where({
+    return this.db.orm.public.CampanhaContato.where({
       campanhaId,
     }).all();
   }
 
   async buscarContatoPorId(contatoId) {
-    return db.orm.public.Contato.where({
+    return this.db.orm.public.Contato.where({
       id: contatoId,
     }).first();
   }
 
+  async buscarDestinatario(vinculo) {
+    if (vinculo.telefone) return { id: vinculo.id, nome: vinculo.nome, telefone: vinculo.telefone };
+    return vinculo.contatoId ? this.buscarContatoPorId(vinculo.contatoId) : null;
+  }
+
+  async buscarResultados(contatos) {
+    if (!contatos.length) return [];
+    return this.db.orm.public.ResultadoMensagem.where((r) => r.campanhaContatoId.in(contatos.map((c) => c.id))).all();
+  }
+
   async buscarMensagens(campanhaId) {
-    return db.orm.public.Mensagem.where({
+    return this.db.orm.public.Mensagem.where({
       campanhaId,
     })
       .orderBy((mensagem) => mensagem.posicao.asc())
@@ -88,13 +99,13 @@ class CampanhaRepository {
   }
 
   async atualizar(id, data) {
-    return db.orm.public.Campanha.where({
+    return this.db.orm.public.Campanha.where({
       id,
     }).update(data);
   }
 
   async atualizarStatus(id, status, dadosExtras = {}) {
-    return db.orm.public.Campanha.where({
+    return this.db.orm.public.Campanha.where({
       id,
     }).update({
       status,
@@ -103,7 +114,7 @@ class CampanhaRepository {
   }
 
   async atualizarStatusContato(id, status, dadosExtras = {}) {
-    return db.orm.public.CampanhaContato.where({
+    return this.db.orm.public.CampanhaContato.where({
       id,
     }).update({
       status,
@@ -111,7 +122,7 @@ class CampanhaRepository {
     });
   }
   async contarContatosPorStatus(campanhaId, status) {
-    const resultado = await db.orm.public.CampanhaContato.where({
+    const resultado = await this.db.orm.public.CampanhaContato.where({
       campanhaId,
       status,
     }).aggregate((a) => ({
@@ -122,7 +133,7 @@ class CampanhaRepository {
   }
 
   async contarMensagensPorStatusCampanha(campanhaId, status) {
-    const contatos = await db.orm.public.CampanhaContato.where({
+    const contatos = await this.db.orm.public.CampanhaContato.where({
       campanhaId,
     })
       .select("id")
@@ -134,7 +145,7 @@ class CampanhaRepository {
 
     const idsCampanhaContato = contatos.map((contato) => contato.id);
 
-    const resultado = await db.orm.public.ResultadoMensagem.where((resultado) =>
+    const resultado = await this.db.orm.public.ResultadoMensagem.where((resultado) =>
       resultado.campanhaContatoId.in(idsCampanhaContato),
     )
       .where({

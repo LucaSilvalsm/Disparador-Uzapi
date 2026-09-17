@@ -24,6 +24,10 @@
       "model": "Mensagem",
       "namespace": "public"
     },
+    "notificacao_campanha": {
+      "model": "NotificacaoCampanha",
+      "namespace": "public"
+    },
     "resultado_mensagem": {
       "model": "ResultadoMensagem",
       "namespace": "public"
@@ -133,6 +137,13 @@
         "models": {
           "Campanha": {
             "fields": {
+              "chaveIdempotencia": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "criadaEm": {
                 "nullable": false,
                 "type": {
@@ -147,10 +158,31 @@
                   "kind": "scalar"
                 }
               },
+              "executorId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "expiraEm": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
               "finalizadaEm": {
                 "nullable": true,
                 "type": {
                   "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "hashSolicitacao": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
                   "kind": "scalar"
                 }
               },
@@ -161,10 +193,24 @@
                   "kind": "scalar"
                 }
               },
+              "hashTokenRelatorio": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "id": {
                 "nullable": false,
                 "type": {
                   "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "idPublico": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
                   "kind": "scalar"
                 }
               },
@@ -200,6 +246,27 @@
                   "entityName": "StatusCampanha",
                   "namespaceId": "public",
                   "plane": "domain"
+                }
+              },
+              "temporaria": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/bool@1",
+                  "kind": "scalar"
+                }
+              },
+              "tokenEnvioCifrado": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "ultimoSinalEm": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
                 }
               }
             },
@@ -248,24 +315,57 @@
                   "model": "Mensagem",
                   "namespace": "public"
                 }
+              },
+              "notificacoes": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "campanhaId"
+                  ]
+                },
+                "to": {
+                  "model": "NotificacaoCampanha",
+                  "namespace": "public"
+                }
               }
             },
             "storage": {
               "fields": {
+                "chaveIdempotencia": {
+                  "column": "chaveIdempotencia"
+                },
                 "criadaEm": {
                   "column": "criadaEm"
                 },
                 "emailRelatorio": {
                   "column": "emailRelatorio"
                 },
+                "executorId": {
+                  "column": "executorId"
+                },
+                "expiraEm": {
+                  "column": "expiraEm"
+                },
                 "finalizadaEm": {
                   "column": "finalizadaEm"
+                },
+                "hashSolicitacao": {
+                  "column": "hashSolicitacao"
                 },
                 "hashTokenAcesso": {
                   "column": "hashTokenAcesso"
                 },
+                "hashTokenRelatorio": {
+                  "column": "hashTokenRelatorio"
+                },
                 "id": {
                   "column": "id"
+                },
+                "idPublico": {
+                  "column": "idPublico"
                 },
                 "iniciadaEm": {
                   "column": "iniciadaEm"
@@ -278,6 +378,15 @@
                 },
                 "status": {
                   "column": "status"
+                },
+                "temporaria": {
+                  "column": "temporaria"
+                },
+                "tokenEnvioCifrado": {
+                  "column": "tokenEnvioCifrado"
+                },
+                "ultimoSinalEm": {
+                  "column": "ultimoSinalEm"
                 }
               },
               "namespaceId": "public",
@@ -294,7 +403,7 @@
                 }
               },
               "contatoId": {
-                "nullable": false,
+                "nullable": true,
                 "type": {
                   "codecId": "pg/int4@1",
                   "kind": "scalar"
@@ -328,6 +437,13 @@
                   "kind": "scalar"
                 }
               },
+              "nome": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "status": {
                 "nullable": false,
                 "type": {
@@ -339,6 +455,13 @@
                   "entityName": "StatusContatoCampanha",
                   "namespaceId": "public",
                   "plane": "domain"
+                }
+              },
+              "telefone": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
                 }
               }
             },
@@ -409,8 +532,14 @@
                 "iniciadoEm": {
                   "column": "iniciadoEm"
                 },
+                "nome": {
+                  "column": "nome"
+                },
                 "status": {
                   "column": "status"
+                },
+                "telefone": {
+                  "column": "telefone"
                 }
               },
               "namespaceId": "public",
@@ -542,6 +671,13 @@
                   "kind": "scalar"
                 }
               },
+              "temporaria": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/bool@1",
+                  "kind": "scalar"
+                }
+              },
               "token": {
                 "nullable": false,
                 "type": {
@@ -592,6 +728,9 @@
                 },
                 "nome": {
                   "column": "nome"
+                },
+                "temporaria": {
+                  "column": "temporaria"
                 },
                 "token": {
                   "column": "token"
@@ -727,6 +866,113 @@
               },
               "namespaceId": "public",
               "table": "mensagem"
+            }
+          },
+          "NotificacaoCampanha": {
+            "fields": {
+              "campanhaId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "conteudoCifrado": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "criadaEm": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "disponivelEm": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "enviadaEm": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "tentativas": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "tipo": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "campanha": {
+                "cardinality": "N:1",
+                "on": {
+                  "localFields": [
+                    "campanhaId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Campanha",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "campanhaId": {
+                  "column": "campanhaId"
+                },
+                "conteudoCifrado": {
+                  "column": "conteudoCifrado"
+                },
+                "criadaEm": {
+                  "column": "criadaEm"
+                },
+                "disponivelEm": {
+                  "column": "disponivelEm"
+                },
+                "enviadaEm": {
+                  "column": "enviadaEm"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "tentativas": {
+                  "column": "tentativas"
+                },
+                "tipo": {
+                  "column": "tipo"
+                }
+              },
+              "namespaceId": "public",
+              "table": "notificacao_campanha"
             }
           },
           "ResultadoMensagem": {
@@ -885,6 +1131,11 @@
                 }
               ],
               "columns": {
+                "chaveIdempotencia": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
                 "criadaEm": {
                   "codecId": "pg/timestamptz-temporal@1",
                   "default": {
@@ -899,12 +1150,32 @@
                   "nativeType": "text",
                   "nullable": true
                 },
+                "executorId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "expiraEm": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true
+                },
                 "finalizadaEm": {
                   "codecId": "pg/timestamptz-temporal@1",
                   "nativeType": "timestamptz",
                   "nullable": true
                 },
+                "hashSolicitacao": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
                 "hashTokenAcesso": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "hashTokenRelatorio": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
                   "nullable": true
@@ -917,6 +1188,11 @@
                   },
                   "nativeType": "int4",
                   "nullable": false
+                },
+                "idPublico": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
                 },
                 "iniciadaEm": {
                   "codecId": "pg/timestamptz-temporal@1",
@@ -947,6 +1223,25 @@
                     "namespaceId": "public",
                     "plane": "storage"
                   }
+                },
+                "temporaria": {
+                  "codecId": "pg/bool@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": false
+                  },
+                  "nativeType": "bool",
+                  "nullable": false
+                },
+                "tokenEnvioCifrado": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "ultimoSinalEm": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true
                 }
               },
               "foreignKeys": [
@@ -970,6 +1265,14 @@
               "indexes": [
                 {
                   "columns": [
+                    "expiraEm"
+                  ],
+                  "name": "campanha_expiraEm_idx_775818ab",
+                  "prefix": "campanha_expiraEm_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
                     "instanciaId"
                   ],
                   "name": "campanha_instanciaId_idx_00db4b25",
@@ -990,7 +1293,18 @@
                   "id"
                 ]
               },
-              "uniques": []
+              "uniques": [
+                {
+                  "columns": [
+                    "idPublico"
+                  ]
+                },
+                {
+                  "columns": [
+                    "chaveIdempotencia"
+                  ]
+                }
+              ]
             },
             "campanha_contato": {
               "checks": [
@@ -1009,7 +1323,7 @@
                 "contatoId": {
                   "codecId": "pg/int4@1",
                   "nativeType": "int4",
-                  "nullable": false
+                  "nullable": true
                 },
                 "criadoEm": {
                   "codecId": "pg/timestamptz-temporal@1",
@@ -1039,6 +1353,11 @@
                   "nativeType": "timestamptz",
                   "nullable": true
                 },
+                "nome": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
                 "status": {
                   "codecId": "pg/text@1",
                   "default": {
@@ -1053,6 +1372,11 @@
                     "namespaceId": "public",
                     "plane": "storage"
                   }
+                },
+                "telefone": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
                 }
               },
               "foreignKeys": [
@@ -1125,6 +1449,12 @@
                   "columns": [
                     "campanhaId",
                     "contatoId"
+                  ]
+                },
+                {
+                  "columns": [
+                    "campanhaId",
+                    "telefone"
                   ]
                 }
               ]
@@ -1235,6 +1565,15 @@
                 "nome": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
+                  "nullable": false
+                },
+                "temporaria": {
+                  "codecId": "pg/bool@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": false
+                  },
+                  "nativeType": "bool",
                   "nullable": false
                 },
                 "token": {
@@ -1360,6 +1699,115 @@
                   "columns": [
                     "campanhaId",
                     "posicao"
+                  ]
+                }
+              ]
+            },
+            "notificacao_campanha": {
+              "columns": {
+                "campanhaId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "conteudoCifrado": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "criadaEm": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "disponivelEm": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "enviadaEm": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true
+                },
+                "id": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "tentativas": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": 0
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "tipo": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "source": {
+                    "columns": [
+                      "campanhaId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "notificacao_campanha"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "campanha"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "campanhaId"
+                  ],
+                  "name": "notificacao_campanha_campanhaId_idx_6cd07fa5",
+                  "prefix": "notificacao_campanha_campanhaId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "disponivelEm"
+                  ],
+                  "name": "notificacao_campanha_disponivelEm_idx_83801283",
+                  "prefix": "notificacao_campanha_disponivelEm_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "campanhaId",
+                    "tipo"
                   ]
                 }
               ]
@@ -1558,7 +2006,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "61c68d5e567152c5a39f38dfe7036fc9b83ccd8b5cf5d5752deb80c8958f78ef"
+    "storageHash": "d4ed62f9053c00217c38841bbc4f80d418e26c12c0863e2d3cff737a2e999751"
   },
   "capabilities": {
     "postgres": {
