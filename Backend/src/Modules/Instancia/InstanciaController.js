@@ -1,7 +1,6 @@
 import instanciaService from "./InstanciaService.js";
 
 class InstanciaController {
-
   async cadastrar(req, res, next) {
     try {
       const instancia = await instanciaService.cadastrar(req.body);
@@ -59,10 +58,7 @@ class InstanciaController {
         throw error;
       }
 
-      const instancia = await instanciaService.atualizar(
-        id,
-        req.body
-      );
+      const instancia = await instanciaService.atualizar(id, req.body);
 
       return res.status(200).json({
         message: "Instância atualizada com sucesso.",

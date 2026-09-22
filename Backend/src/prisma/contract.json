@@ -130,6 +130,10 @@
               {
                 "name": "AUDIO",
                 "value": "audio"
+              },
+              {
+                "name": "DOCUMENTO",
+                "value": "documento"
               }
             ]
           }
@@ -770,6 +774,13 @@
                   "kind": "scalar"
                 }
               },
+              "nomeArquivo": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "posicao": {
                 "nullable": false,
                 "type": {
@@ -850,6 +861,9 @@
                 },
                 "idMidia": {
                   "column": "idMidia"
+                },
+                "nomeArquivo": {
+                  "column": "nomeArquivo"
                 },
                 "posicao": {
                   "column": "posicao"
@@ -1600,8 +1614,8 @@
             "mensagem": {
               "checks": [
                 {
-                  "expression": "\"tipo\" IN ('texto', 'link', 'imagem', 'video', 'audio')",
-                  "name": "mensagem_tipo_check_52a1ae30",
+                  "expression": "\"tipo\" IN ('texto', 'link', 'imagem', 'video', 'audio', 'documento')",
+                  "name": "mensagem_tipo_check_df7a41b0",
                   "prefix": "mensagem_tipo_check"
                 }
               ],
@@ -1630,6 +1644,11 @@
                   "nullable": false
                 },
                 "idMidia": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "nomeArquivo": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
                   "nullable": true
@@ -1997,7 +2016,8 @@
                 "link",
                 "imagem",
                 "video",
-                "audio"
+                "audio",
+                "documento"
               ]
             }
           }
@@ -2006,7 +2026,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "d4ed62f9053c00217c38841bbc4f80d418e26c12c0863e2d3cff737a2e999751"
+    "storageHash": "a59dde29a5fe22cd48874ad67f238a07fd88b43da1d462e41fd42b643790dd1d"
   },
   "capabilities": {
     "postgres": {

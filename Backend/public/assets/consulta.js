@@ -1,6 +1,8 @@
 const elemento = (id) => document.getElementById(id);
 const [, pagina, id] = location.pathname.split("/");
 const tipo = pagina === "acompanhamento" ? "progresso" : "relatorio";
+document.title = `${tipo === "progresso" ? "Acompanhamento" : "Relatório"} da campanha — Uzapi`;
+elemento("contexto").textContent = tipo === "progresso" ? "ACOMPANHAMENTO DA CAMPANHA" : "RELATÓRIO DA CAMPANHA";
 const caminho = `/acessos/${encodeURIComponent(id)}/${tipo}`;
 let encerrado = false;
 const rotulos = { em_andamento: "Em andamento", concluida: "Concluída", concluido: "Concluído", falhou: "Falhou", parcial: "Parcial", pendente: "Pendente", processando: "Processando", sucesso: "Aceita pela Uzapi", cancelada: "Cancelada" };
@@ -19,14 +21,27 @@ async function atualizar() {
     const data = await resposta(await fetch(caminho, { credentials: "same-origin", cache: "no-store" }));
     elemento("titulo").textContent = data.nome;
     elemento("status").textContent = `Status: ${rotulo(data.status)}`;
+    elemento("status").dataset.status = data.status;
     elemento("aviso").textContent = tipo === "progresso" ? "Atualização automática a cada 5 segundos." : "Relatório final. Sucesso indica aceitação pela Uzapi, não confirmação de entrega.";
     elemento("dados").hidden = false;
+    const contagens = tipo === "progresso" ? data.contatos : {
+      total: data.totalContatos,
+      concluidos: data.contatos.filter((c) => c.status === "concluido").length,
+      parciais: data.contatos.filter((c) => c.status === "parcial").length,
+      falhos: data.contatos.filter((c) => c.status === "falhou").length,
+    };
+    for (const [sufixo, campo] of [["contatos", "total"], ["concluidos", "concluidos"], ["parciais", "parciais"], ["falhos", "falhos"]]) {
+      elemento(`total-${sufixo}`).textContent = contagens[campo];
+    }
     if (tipo === "progresso") {
       elemento("barra").value = data.progresso;
+      elemento("percentual").textContent = `${data.progresso}%`;
       elemento("resumo").textContent = `${data.contatos.processados} de ${data.contatos.total} contatos processados (${data.progresso}%). Concluídos: ${data.contatos.concluidos}. Parciais: ${data.contatos.parciais}. Falhos: ${data.contatos.falhos}. Restantes: ${data.contatos.restantes}.`;
     } else {
+      elemento("progresso-visual").hidden = true;
+      elemento("detalhes-relatorio").hidden = false;
       elemento("barra").hidden = true;
-      elemento("resumo").textContent = `${data.totalContatos} contatos · ${data.quantidadeMensagens} mensagens por contato`;
+      elemento("resumo").textContent = `${data.totalContatos} contatos · ${data.quantidadeMensagens} ${data.quantidadeMensagens === 1 ? "mensagem" : "mensagens"} por contato`;
       elemento("prazo").textContent = `Disponível até: ${data.expiraEm}`;
       elemento("csv").href = `${caminho}/exportar?formato=csv`;
       elemento("xlsx").href = `${caminho}/exportar?formato=xlsx`;

@@ -1,0 +1,128 @@
+[
+  {
+    "id": "dropCheckConstraint.mensagem.mensagem_tipo_check_52a1ae30",
+    "label": "Drop check constraint \"mensagem_tipo_check_52a1ae30\" on \"mensagem\"",
+    "operationClass": "destructive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "mensagem_tipo_check_52a1ae30",
+        "table": "mensagem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"mensagem_tipo_check_52a1ae30\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "mensagem_tipo_check_52a1ae30",
+          "public",
+          "\"public\".\"mensagem\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "drop check constraint \"mensagem_tipo_check_52a1ae30\"",
+        "sql": "ALTER TABLE \"public\".\"mensagem\" DROP CONSTRAINT \"mensagem_tipo_check_52a1ae30\""
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"mensagem_tipo_check_52a1ae30\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "mensagem_tipo_check_52a1ae30",
+          "public",
+          "\"public\".\"mensagem\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.mensagem.nomeArquivo",
+    "label": "Add column \"nomeArquivo\" to \"mensagem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "nomeArquivo",
+        "table": "mensagem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"nomeArquivo\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "mensagem",
+          "nomeArquivo"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"nomeArquivo\"",
+        "sql": "ALTER TABLE \"public\".\"mensagem\" ADD COLUMN \"nomeArquivo\" text"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"nomeArquivo\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "mensagem",
+          "nomeArquivo"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.mensagem.mensagem_tipo_check_df7a41b0",
+    "label": "Add check constraint \"mensagem_tipo_check_df7a41b0\" on \"mensagem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "mensagem_tipo_check_df7a41b0",
+        "table": "mensagem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"mensagem_tipo_check_df7a41b0\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "mensagem_tipo_check_df7a41b0",
+          "public",
+          "\"public\".\"mensagem\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"mensagem_tipo_check_df7a41b0\"",
+        "sql": "ALTER TABLE \"public\".\"mensagem\" ADD CONSTRAINT \"mensagem_tipo_check_df7a41b0\" CHECK (\"tipo\" IN ('texto', 'link', 'imagem', 'video', 'audio', 'documento'))"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"mensagem_tipo_check_df7a41b0\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "mensagem_tipo_check_df7a41b0",
+          "public",
+          "\"public\".\"mensagem\""
+        ]
+      }
+    ]
+  }
+]

@@ -27,6 +27,7 @@ enum TipoMensagem {
   IMAGEM = "imagem"
   VIDEO  = "video"
   AUDIO  = "audio"
+  DOCUMENTO = "documento"
 }
 
 enum StatusMensagem {
@@ -147,6 +148,7 @@ model Mensagem {
   texto      String?
   urlMidia   String?
   idMidia    String?
+  nomeArquivo String?
 
   criadaEm DateTime @default(now())
 

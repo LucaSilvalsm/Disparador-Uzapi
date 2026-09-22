@@ -94,20 +94,33 @@ class DisparadorService {
   agendar(campanhaId, instanciaId) {
     // O agendamento ocorre somente DEPOIS do commit, sem segurar a resposta HTTP.
     setImmediate(() => {
-      void notificacoes.processarPendentes(campanhaId)
-        .catch((error) => registrarErro("falha_notificacao_campanha", error, { campanhaId }));
+      void notificacoes
+        .processarPendentes(campanhaId)
+        .catch((error) =>
+          registrarErro("falha_notificacao_campanha", error, { campanhaId }),
+        );
       let sinalizando = false;
       const heartbeat = setInterval(async () => {
         if (sinalizando) return;
         sinalizando = true;
-        try { await cicloCampanha.sinalizar(campanhaId); }
-        catch (error) { registrarErro("falha_heartbeat", error, { campanhaId }); }
-        finally { sinalizando = false; }
+        try {
+          await cicloCampanha.sinalizar(campanhaId);
+        } catch (error) {
+          registrarErro("falha_heartbeat", error, { campanhaId });
+        } finally {
+          sinalizando = false;
+        }
       }, 15000);
       heartbeat.unref();
-      console.info(JSON.stringify({ evento: "campanha_iniciada", campanhaId, horario: new Date().toISOString() }));
-      void this.processar(campanhaId, instanciaId).catch(
-        async (error) => {
+      console.info(
+        JSON.stringify({
+          evento: "campanha_iniciada",
+          campanhaId,
+          horario: new Date().toISOString(),
+        }),
+      );
+      void this.processar(campanhaId, instanciaId)
+        .catch(async (error) => {
           registrarErro("campanha_interrompida", error, { campanhaId });
           try {
             await this.finalizar(campanhaId, "falhou");
@@ -118,24 +131,37 @@ class DisparadorService {
               { campanhaId },
             );
           }
-        },
-      ).finally(() => clearInterval(heartbeat));
+        })
+        .finally(() => clearInterval(heartbeat));
     });
   }
 
   async finalizar(campanhaId, status) {
     const campanha = await cicloCampanha.finalizar(campanhaId, status);
     if (!campanha) return;
-    console.info(JSON.stringify({ evento: "campanha_finalizada", campanhaId, status, horario: new Date().toISOString() }));
+    console.info(
+      JSON.stringify({
+        evento: "campanha_finalizada",
+        campanhaId,
+        status,
+        horario: new Date().toISOString(),
+      }),
+    );
     if (!campanha.temporaria) {
-      try { await campanhaRelatorioService.enviar(campanhaId); }
-      catch (error) { registrarErro("falha_envio_relatorio_email", error, { campanhaId }); }
+      try {
+        await campanhaRelatorioService.enviar(campanhaId);
+      } catch (error) {
+        registrarErro("falha_envio_relatorio_email", error, { campanhaId });
+      }
     }
   }
 
   async podeContinuar(campanhaId) {
     const campanha = await disparoRepository.buscarCampanha(campanhaId);
-    return campanha?.status === "em_andamento" && (!campanha.temporaria || campanha.executorId === executorId);
+    return (
+      campanha?.status === "em_andamento" &&
+      (!campanha.temporaria || campanha.executorId === executorId)
+    );
   }
 
   async reservarProximo(campanhaId, instanciaId) {
@@ -144,10 +170,17 @@ class DisparadorService {
       async (repo, instancia) => {
         const campanha = await repo.buscarCampanha(campanhaId);
         if (campanha?.status !== "em_andamento") return { encerrada: true };
-        if (campanha.temporaria && campanha.executorId !== executorId) return { encerrada: true };
-        const credencial = campanha.temporaria ? {
-          ...instancia, token: decifrar(campanha.tokenEnvioCifrado, `uzapi:${campanha.idPublico}`),
-        } : instancia;
+        if (campanha.temporaria && campanha.executorId !== executorId)
+          return { encerrada: true };
+        const credencial = campanha.temporaria
+          ? {
+              ...instancia,
+              token: decifrar(
+                campanha.tokenEnvioCifrado,
+                `uzapi:${campanha.idPublico}`,
+              ),
+            }
+          : instancia;
         this.validarInstancia(credencial);
         const pendente = await repo.proximoPendente(campanhaId);
         if (!pendente) return { concluida: true };
@@ -205,7 +238,8 @@ class DisparadorService {
     { contato: campanhaContato, instancia },
     mensagens,
   ) {
-    const contato = await campanhaRepository.buscarDestinatario(campanhaContato);
+    const contato =
+      await campanhaRepository.buscarDestinatario(campanhaContato);
     let sucessos = 0;
     let erroAutenticacao = false;
     if (contato) {
@@ -230,7 +264,8 @@ class DisparadorService {
             mensagem,
           });
         } catch (error) {
-          if (!(await this.podeContinuar(campanhaId))) return { encerrada: true };
+          if (!(await this.podeContinuar(campanhaId)))
+            return { encerrada: true };
           registrarErro("falha_envio_uzapi", error, {
             campanhaId,
             campanhaContatoId: campanhaContato.id,

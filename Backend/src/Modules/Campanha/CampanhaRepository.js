@@ -1,7 +1,9 @@
 import { db } from "../../prisma/db.js";
 
 export class CampanhaRepository {
-  constructor(executor = db) { this.db = executor; }
+  constructor(executor = db) {
+    this.db = executor;
+  }
   async cadastrarCompleta(data, contatos, mensagens) {
     return this.db.transaction(async (tx) => {
       const campanha = await tx.orm.public.Campanha.create(data);
@@ -57,6 +59,20 @@ export class CampanhaRepository {
     }).first();
   }
 
+  async buscarResumoPorUuid(idPublico) {
+    return this.db.orm.public.Campanha.where({ idPublico })
+      .select(
+        "id",
+        "idPublico",
+        "status",
+        "criadaEm",
+        "iniciadaEm",
+        "finalizadaEm",
+        "expiraEm",
+      )
+      .first();
+  }
+
   async criarCampanhaContato(campanhaId, contatoId) {
     return this.db.orm.public.CampanhaContato.create({
       campanhaId,
@@ -81,13 +97,18 @@ export class CampanhaRepository {
   }
 
   async buscarDestinatario(vinculo) {
-    if (vinculo.telefone) return { id: vinculo.id, nome: vinculo.nome, telefone: vinculo.telefone };
-    return vinculo.contatoId ? this.buscarContatoPorId(vinculo.contatoId) : null;
+    if (vinculo.telefone)
+      return { id: vinculo.id, nome: vinculo.nome, telefone: vinculo.telefone };
+    return vinculo.contatoId
+      ? this.buscarContatoPorId(vinculo.contatoId)
+      : null;
   }
 
   async buscarResultados(contatos) {
     if (!contatos.length) return [];
-    return this.db.orm.public.ResultadoMensagem.where((r) => r.campanhaContatoId.in(contatos.map((c) => c.id))).all();
+    return this.db.orm.public.ResultadoMensagem.where((r) =>
+      r.campanhaContatoId.in(contatos.map((c) => c.id)),
+    ).all();
   }
 
   async buscarMensagens(campanhaId) {
@@ -145,8 +166,8 @@ export class CampanhaRepository {
 
     const idsCampanhaContato = contatos.map((contato) => contato.id);
 
-    const resultado = await this.db.orm.public.ResultadoMensagem.where((resultado) =>
-      resultado.campanhaContatoId.in(idsCampanhaContato),
+    const resultado = await this.db.orm.public.ResultadoMensagem.where(
+      (resultado) => resultado.campanhaContatoId.in(idsCampanhaContato),
     )
       .where({
         status,

@@ -868,3 +868,28 @@ As páginas mínimas de consulta já são servidas pelo Express. O formulário
 Vue completo, login administrativo com usuários/perfis, fila dedicada,
 pausa/retomada e confirmação de entrega por webhook não fazem parte
 desta etapa. Consulte o README do backend para endpoints e testes.
+
+### OBS: consulta por UUID e futura integração nativa (21/09/2026)
+
+A rota `GET /campanhas/uuid/:uuid` fica provisoriamente sem autenticação,
+por decisão de desenvolvimento. Permite localizar o ID numérico da campanha
+a partir do UUID retornado pelo disparo. Expõe somente `id`, `idPublico`,
+`status`, `criadaEm`, `iniciadaEm`, `finalizadaEm` e `expiraEm`, sem nome,
+e-mail, contatos, mensagens ou segredos. Não é uma listagem nem substitui os
+links protegidos de progresso/relatório. As demais rotas administrativas
+mantêm sua proteção atual. Quem possui o UUID pode consultar esse resumo
+enquanto o registro existir; UUID não equivale a autenticação.
+
+Quando a integração com a Uzapi for nativa e fornecer identidade confiável,
+criar os seguintes arquivos (nomes propostos, ainda não implementados):
+
+- `Backend/src/Modules/Autenticacao/IdentidadeUzapiService.js`: validar a
+  identidade via mecanismo oficial disponibilizado pela Uzapi.
+- `Backend/src/shared/middleware/AutenticacaoUzapiMiddleware.js`: estabelecer
+  a identidade autenticada na requisição.
+- `Backend/src/shared/middleware/AutorizacaoCampanhaMiddleware.js`: verificar
+  vínculo com a campanha/instância e permissões administrativas.
+
+Nessa etapa, proteger também a consulta por UUID e adicionar testes de
+isolamento entre usuários e instâncias. Não deduzir propriedade a partir
+apenas do e-mail, Phone ID ou UUID informado pelo cliente.

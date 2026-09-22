@@ -3,10 +3,14 @@ import instanciaRepository from "../Instancia/InstanciaRepository.js";
 import contatoService from "../Contato/ContatoService.js";
 import disparadorService from "../Disparo/DisparadorService.js";
 import { normalizarEmail } from "../../shared/utils/normalizarEmail.js";
+import { erroHttp } from "../../shared/utils/erros.js";
+import { validarNomeArquivo } from "../../../public/assets/midia-formatos.js";
 
 export class CampanhaService {
-  constructor(repository = campanhaRepository) { this.repository = repository; }
-  tiposPermitidos = ["texto", "link", "imagem", "video", "audio"];
+  constructor(repository = campanhaRepository) {
+    this.repository = repository;
+  }
+  tiposPermitidos = ["texto", "link", "imagem", "video", "audio", "documento"];
 
   validarMensagens(mensagens) {
     if (!Array.isArray(mensagens)) {
@@ -25,7 +29,8 @@ export class CampanhaService {
 
     mensagens.forEach((mensagem, index) => {
       if (
-        !mensagem || typeof mensagem !== "object" ||
+        !mensagem ||
+        typeof mensagem !== "object" ||
         typeof mensagem.tipo !== "string" ||
         !mensagem.tipo.trim()
       ) {
@@ -38,6 +43,16 @@ export class CampanhaService {
       }
 
       const tipo = mensagem.tipo.toLowerCase();
+      if (tipo === "documento") {
+        try {
+          validarNomeArquivo(mensagem.nomeArquivo);
+        } catch {
+          throw erroHttp(
+            400,
+            "Nome de arquivo inválido ou extensão não permitida.",
+          );
+        }
+      }
 
       if (!this.tiposPermitidos.includes(tipo)) {
         const error = new Error(
@@ -85,7 +100,7 @@ export class CampanhaService {
        * MÍDIA
        */
       if (
-        ["imagem", "video", "audio"].includes(tipo) &&
+        ["imagem", "video", "audio", "documento"].includes(tipo) &&
         !mensagem.urlMidia &&
         !mensagem.idMidia
       ) {
@@ -149,7 +164,8 @@ export class CampanhaService {
     this.validarMensagens(mensagens);
 
     // Mantém um destinatário próprio na campanha, mesmo se a instância mudar depois.
-    const usarEmailInstancia = emailRelatorio == null ||
+    const usarEmailInstancia =
+      emailRelatorio == null ||
       (typeof emailRelatorio === "string" && !emailRelatorio.trim());
     const destinatarioRelatorio = normalizarEmail(
       usarEmailInstancia ? instancia.email : emailRelatorio,
@@ -172,6 +188,7 @@ export class CampanhaService {
             : null,
         urlMidia: mensagem.urlMidia || null,
         idMidia: mensagem.idMidia || null,
+        nomeArquivo: mensagem.nomeArquivo || null,
       })),
     );
 
@@ -196,6 +213,32 @@ export class CampanhaService {
 
   async listar() {
     return this.repository.listar();
+  }
+
+  async buscarPorUuid(uuid) {
+    if (
+      typeof uuid !== "string" ||
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        uuid,
+      )
+    ) {
+      throw erroHttp(400, "UUID da campanha inválido.");
+    }
+    const campanha = await this.repository.buscarResumoPorUuid(
+      uuid.toLowerCase(),
+    );
+    if (!campanha) throw erroHttp(404, "Campanha não encontrada.");
+
+    // Consulta pública provisória: nunca retornar o registro completo da campanha.
+    return {
+      id: campanha.id,
+      idPublico: campanha.idPublico,
+      status: campanha.status,
+      criadaEm: campanha.criadaEm,
+      iniciadaEm: campanha.iniciadaEm,
+      finalizadaEm: campanha.finalizadaEm,
+      expiraEm: campanha.expiraEm,
+    };
   }
 
   async buscarPorId(id) {
@@ -260,7 +303,8 @@ export class CampanhaService {
       this.repository.contarMensagensPorStatusCampanha(id, "falhou"),
     ]);
 
-    const quantidadeMensagens = (await this.repository.buscarMensagens(id)).length;
+    const quantidadeMensagens = (await this.repository.buscarMensagens(id))
+      .length;
     const totalContatos =
       pendentes + processando + concluidos + parciais + falhos;
 
@@ -286,7 +330,12 @@ export class CampanhaService {
       },
 
       mensagens: {
-        pendentes: Math.max(0, totalContatos * quantidadeMensagens - mensagensSucesso - mensagensFalha),
+        pendentes: Math.max(
+          0,
+          totalContatos * quantidadeMensagens -
+            mensagensSucesso -
+            mensagensFalha,
+        ),
         sucesso: mensagensSucesso,
         falhou: mensagensFalha,
 
@@ -315,7 +364,9 @@ export class CampanhaService {
 
     const contatosRelatorio = [];
     const resultados = await this.repository.buscarResultados(campanhaContatos);
-    const porMensagem = new Map(resultados.map((r) => [`${r.campanhaContatoId}:${r.mensagemId}`, r]));
+    const porMensagem = new Map(
+      resultados.map((r) => [`${r.campanhaContatoId}:${r.mensagemId}`, r]),
+    );
 
     for (const campanhaContato of campanhaContatos) {
       const contato = await this.repository.buscarDestinatario(campanhaContato);
@@ -327,7 +378,9 @@ export class CampanhaService {
       const mensagensRelatorio = [];
 
       for (const mensagem of mensagens) {
-        const resultado = porMensagem.get(`${campanhaContato.id}:${mensagem.id}`);
+        const resultado = porMensagem.get(
+          `${campanhaContato.id}:${mensagem.id}`,
+        );
 
         mensagensRelatorio.push({
           mensagemId: mensagem.id,

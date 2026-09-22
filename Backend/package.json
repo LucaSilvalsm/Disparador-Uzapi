@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
-    "test": "node --test tests/fluxo.test.js",
+    "test": "node --test tests/fluxo.test.js tests/midia.test.js",
     "test:integration": "node --test tests/integration.test.js",
     "contract:emit": "prisma contract emit",
     "audit:prod": "npm audit --omit=dev"

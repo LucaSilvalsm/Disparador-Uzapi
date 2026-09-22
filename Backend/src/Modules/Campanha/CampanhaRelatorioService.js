@@ -2,29 +2,23 @@ import campanhaService from "./CampanhaService.js";
 import emailService from "../../shared/Email/EmailService.js";
 
 class CampanhaRelatorioService {
-
   montarHtml(relatorio) {
-    const contatosHtml =
-      relatorio.contatos
-        .map((contato) => {
-
-          const mensagens =
-            contato.mensagens
-              .map((mensagem) => `
+    const contatosHtml = relatorio.contatos
+      .map((contato) => {
+        const mensagens = contato.mensagens
+          .map(
+            (mensagem) => `
                 <li>
                   Mensagem ${mensagem.posicao}
                   (${mensagem.tipo}):
                   <strong>${mensagem.status}</strong>
-                  ${
-                    mensagem.erro
-                      ? ` - ${mensagem.erro}`
-                      : ""
-                  }
+                  ${mensagem.erro ? ` - ${mensagem.erro}` : ""}
                 </li>
-              `)
-              .join("");
+              `,
+          )
+          .join("");
 
-          return `
+        return `
             <tr>
               <td>${contato.nome || "-"}</td>
               <td>${contato.telefone}</td>
@@ -36,8 +30,8 @@ class CampanhaRelatorioService {
               </td>
             </tr>
           `;
-        })
-        .join("");
+      })
+      .join("");
 
     return `
       <h2>Relatório da campanha</h2>
@@ -84,28 +78,20 @@ class CampanhaRelatorioService {
   }
 
   async enviar(campanhaId) {
-    const campanha =
-      await campanhaService.buscarPorId(
-        campanhaId
-      );
+    const campanha = await campanhaService.buscarPorId(campanhaId);
 
     if (!campanha.emailRelatorio) {
       return;
     }
 
-    const relatorio =
-      await campanhaService.relatorio(
-        campanhaId
-      );
+    const relatorio = await campanhaService.relatorio(campanhaId);
 
-    const html =
-      this.montarHtml(relatorio);
+    const html = this.montarHtml(relatorio);
 
     await emailService.enviar({
       para: campanha.emailRelatorio,
 
-      assunto:
-        `Relatório da campanha - ${campanha.nome}`,
+      assunto: `Relatório da campanha - ${campanha.nome}`,
 
       html,
     });

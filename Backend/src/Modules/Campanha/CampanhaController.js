@@ -1,6 +1,15 @@
 import campanhaService from "./CampanhaService.js";
 
 class CampanhaController {
+  async buscarPorUuid(req, res, next) {
+    try {
+      const campanha = await campanhaService.buscarPorUuid(req.params.uuid);
+      return res.status(200).json({ data: campanha });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async cadastrar(req, res, next) {
     try {
       const campanha = await campanhaService.cadastrar(req.body);

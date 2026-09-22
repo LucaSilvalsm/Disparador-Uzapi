@@ -8,16 +8,26 @@ class UzapiClient {
   }
 
   normalizarToken(token) {
-    if (typeof token !== "string") throw erroHttp(400, "O token da Uzapi é obrigatório.");
-    const valor = token.trim().replace(/^Bearer\s+/i, "").trim();
+    if (typeof token !== "string")
+      throw erroHttp(400, "O token da Uzapi é obrigatório.");
+    const valor = token
+      .trim()
+      .replace(/^Bearer\s+/i, "")
+      .trim();
     if (!valor || /^Bearer$/i.test(valor) || /\s/.test(valor)) {
-      throw erroHttp(400, "O token da Uzapi está vazio ou possui formato inválido.");
+      throw erroHttp(
+        400,
+        "O token da Uzapi está vazio ou possui formato inválido.",
+      );
     }
     return valor;
   }
 
   validarCredenciais(instancia) {
-    if (typeof instancia.idNumeroTelefone !== "string" || !instancia.idNumeroTelefone.trim()) {
+    if (
+      typeof instancia.idNumeroTelefone !== "string" ||
+      !instancia.idNumeroTelefone.trim()
+    ) {
       throw erroHttp(400, "O Phone ID é obrigatório.");
     }
     this.normalizarToken(instancia.token);
@@ -43,6 +53,13 @@ class UzapiClient {
   }
 
   async enviarMensagem({ instancia, telefone, mensagem }) {
+    if (mensagem.tipo === "documento") {
+      return this.executarEnvio(this.criarClient(instancia), {
+        to: telefone, delayMessage: 0, type: "document",
+        document: { ...(mensagem.idMidia ? { id: mensagem.idMidia } : { link: mensagem.urlMidia }),
+          filename: mensagem.nomeArquivo, ...(mensagem.texto ? { caption: mensagem.texto } : {}) },
+      });
+    }
     switch (mensagem.tipo) {
       case "texto":
         return this.enviarTexto({
@@ -78,6 +95,12 @@ class UzapiClient {
           telefone,
           mensagem,
         });
+      case "document":
+        return this.enviarDocumento({
+          instancia,
+          telefone,
+          mensagem,
+        });
 
       default:
         throw new Error(`Tipo de mensagem não suportado: ${mensagem.tipo}`);
@@ -95,6 +118,23 @@ class UzapiClient {
       text: {
         preview_url: true,
         body: mensagem.texto,
+      },
+    };
+
+    return this.executarEnvio(client, payload);
+  }
+    async enviarDocumento({ instancia, telefone, mensagem }) {
+    const client = this.criarClient(instancia);
+
+    const payload = {
+      to: telefone,
+      type: "document",
+      delayMessage: 0,
+
+      document: {
+        id: "",
+        caption: "Documento de teste",
+        filneme: mensagem.texto
       },
     };
 
@@ -127,7 +167,9 @@ class UzapiClient {
       delayMessage: 0,
 
       image: {
-        link: mensagem.urlMidia,
+        ...(mensagem.idMidia
+          ? { id: mensagem.idMidia }
+          : { link: mensagem.urlMidia }),
       },
     };
 
@@ -147,7 +189,9 @@ class UzapiClient {
       delayMessage: 0,
 
       video: {
-        link: mensagem.urlMidia,
+        ...(mensagem.idMidia
+          ? { id: mensagem.idMidia }
+          : { link: mensagem.urlMidia }),
       },
     };
 
@@ -167,35 +211,88 @@ class UzapiClient {
       delayMessage: 0,
 
       audio: {
-        link: mensagem.urlMidia,
+        ...(mensagem.idMidia
+          ? { id: mensagem.idMidia }
+          : { link: mensagem.urlMidia }),
       },
     };
 
     return this.executarEnvio(client, payload);
   }
 
-  async executarEnvio(client, payload) {
+  async enviarMidia({ buffer, mime, phoneId, token, nomeArquivo, signal }) {
+    const extensoes = {
+      "image/jpeg": "jpg",
+      "image/png": "png",
+      "audio/mpeg": "mp3",
+      "audio/ogg": "ogg",
+      "audio/mp4": "m4a",
+      "audio/aac": "aac",
+      "video/mp4": "mp4",
+    };
+    const form = new FormData();
+    form.append("messaging_product", "whatsapp");
+    form.append(
+      "file",
+      new Blob([buffer], { type: mime }),
+      nomeArquivo || `midia.${extensoes[mime]}`,
+    );
+    const resposta = await this.executarEnvio(
+      this.criarClient({ idNumeroTelefone: phoneId, token }),
+      form,
+      "/media",
+      {
+        headers: { "Content-Type": undefined },
+        timeout: 60000,
+        maxBodyLength: 18 * 1024 * 1024,
+        maxContentLength: 256 * 1024,
+        signal,
+      },
+    );
+    const id = resposta?.id ?? resposta?.data?.id;
+    if (id == null || !/^[A-Za-z0-9_-]{1,512}$/.test(String(id)))
+      throw erroHttp(502, "A Uzapi não retornou um ID de mídia válido.");
+    return String(id);
+  }
+
+  async executarEnvio(client, payload, rota = "/messages", opcoes = undefined) {
     try {
-      const response = await client.post("/messages", payload);
+      const response = await client.post(rota, payload, opcoes);
 
       return response.data;
     } catch (error) {
-      const status = Number.isInteger(error.response?.status) ? error.response.status : 502;
+      const status = Number.isInteger(error.response?.status)
+        ? error.response.status
+        : 502;
       let detalhe = error.response?.data;
-      for (let nivel = 0; nivel < 5 && detalhe && typeof detalhe === "object"; nivel++) {
+      for (
+        let nivel = 0;
+        nivel < 5 && detalhe && typeof detalhe === "object";
+        nivel++
+      ) {
         detalhe = detalhe.message ?? detalhe.error;
       }
       // O corpo remoto pode repetir credenciais ou dados pessoais. Converte em diagnóstico conhecido.
       let mensagemSegura = `A Uzapi recusou o envio (HTTP ${status}).`;
-      if (!error.response) mensagemSegura = "Não foi possível confirmar o envio à Uzapi: falha de conexão ou timeout.";
+      if (!error.response)
+        mensagemSegura =
+          "Não foi possível confirmar o envio à Uzapi: falha de conexão ou timeout.";
       if (status === 401) {
-        mensagemSegura = typeof detalhe === "string" && /access token não informado/i.test(detalhe)
-          ? "Uzapi: Access Token não informado (HTTP 401). Confira a credencial e o cabeçalho Authorization."
-          : "Uzapi: credencial não autorizada (HTTP 401). Confira o token e o Phone ID.";
+        mensagemSegura =
+          typeof detalhe === "string" &&
+          /access token não informado/i.test(detalhe)
+            ? "Uzapi: Access Token não informado (HTTP 401). Confira a credencial e o cabeçalho Authorization."
+            : "Uzapi: credencial não autorizada (HTTP 401). Confira o token e o Phone ID.";
       }
-      if (status === 403) mensagemSegura = "Uzapi: acesso negado à instância (HTTP 403).";
-      if (status === 429) mensagemSegura = "Uzapi: limite de requisições atingido (HTTP 429).";
-      throw Object.assign(new Error(mensagemSegura), { statusCode: status, origem: "uzapi", mensagemSegura });
+      if (status === 403)
+        mensagemSegura = "Uzapi: acesso negado à instância (HTTP 403).";
+      if (status === 429)
+        mensagemSegura = "Uzapi: limite de requisições atingido (HTTP 429).";
+      throw Object.assign(new Error(mensagemSegura), {
+        statusCode: status,
+        origem: "uzapi",
+        mensagemSegura,
+      });
     }
   }
 }
